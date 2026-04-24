@@ -1,0 +1,18 @@
+#!/bin/bash
+#SBATCH --job-name=sisap25-hforest-task2
+#SBATCH --output=hforest-task1-%j.out
+#SBATCH --error=hforest-task1-%j.err
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=16G
+#SBATCH --time=12:00:00
+#SBATCH --partition=red
+echo "Running on $(hostname) at $(date)"
+DATASET_PATH="/path/to/sisap25/datasets"  # Update this path
+OUTPUT_PATH="/path/to/results/task2-${SLURM_JOB_ID}"
+mkdir -p $OUTPUT_PATH
+export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+apptainer run \
+    -B $DATASET_PATH:/app/data:ro \
+    -B $OUTPUT_PATH:/app/results:rw \
+    hforest.sif python sisap2025.py task2
+echo "Task 1 completed at $(date)"
