@@ -14,12 +14,11 @@
 #SBATCH --mem=32G
 #SBATCH --time=01:00:00
 #SBATCH --partition=scavenge
-#SBATCH --exclusive          # one job per node so results are not contaminated
 
 # ── Paths (update for your HPC environment) ─────────────────────────────────
-CONTAINER_PATH="/path/to/containers/hforest.sif"
-DATASET_PATH="/path/to/sisap25/datasets"
-OUTPUT_BASE="/path/to/results/bench"
+CONTAINER_PATH="/home/maau/sisap26-baseline-dev/hforest.sif"
+DATASET_PATH="/home/maau/sisap26-baseline-dev/data/"
+OUTPUT_BASE="/home/maau/sisap26-baseline-dev/bench/"
 # ─────────────────────────────────────────────────────────────────────────────
 
 NODE=$(hostname -s)
