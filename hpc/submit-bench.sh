@@ -89,8 +89,8 @@ for NODE in desktop1 cn14 cn16 cn5 cn6 cn8 cn9 cn11; do
         CMD=(
             sbatch
             --nodelist="$NODE"
-            --cpus-per-task="$NCPUS"
-            --mem="$MEM"
+            --cpus-per-task=8 #"$NCPUS"
+            #--mem="$MEM"
             --output="$SCRIPT_DIR/bench-logs/bench-${NODE}-${NCPUS}cpu-%j.out"
             --error="$SCRIPT_DIR/bench-logs/bench-${NODE}-${NCPUS}cpu-%j.err"
             "$SLURM_SCRIPT"
