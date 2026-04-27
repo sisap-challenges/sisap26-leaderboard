@@ -183,7 +183,7 @@ if __name__ == "__main__":
 
     parser.add_argument(
         '--dataset',
-        choices=DATASETS.keys(),
+        choices=list(DATASETS.keys()),
         default='llama-dev'
     )
 

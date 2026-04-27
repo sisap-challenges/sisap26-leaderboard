@@ -5,7 +5,7 @@ import os
 import csv
 import glob
 from pathlib import Path
-from datasets import DATASETS, get_fn, prepare
+from datasets import DATASETS, get_fn, get_gt_fn, prepare
 
 def get_all_results(dirname):
     mask = [dirname + "/**/*.h5", dirname + "/**/*/*.h5"]
@@ -65,10 +65,11 @@ if __name__ == "__main__":
             d = dict(res.attrs)
             # print(d)
             fn = get_fn(dataset, task)
-            print(f"Using groundtruth in {fn}")
-            f = h5py.File(fn)
-            gt_I = np.array(DATASETS[dataset][task]['gt_I'](f))
-            f.close()
+            gt_fn = get_gt_fn(dataset, task)
+            print(f"Using groundtruth in {gt_fn}")
+            f_gt = h5py.File(gt_fn)
+            gt_I = np.array(DATASETS[dataset][task]['gt_I'](f_gt))
+            f_gt.close()
             recall = get_recall(np.array(res["knns"]), gt_I, DATASETS[dataset][task]['k'])
             d['recall'] = recall
             print(d["dataset"], d["task"], d["algo"], d["params"], "=>", recall)

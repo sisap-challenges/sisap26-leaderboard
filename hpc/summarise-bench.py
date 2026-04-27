@@ -27,6 +27,16 @@ except ImportError:
 
 OUTPUT_BASE_DEFAULT = "/home/maau/sisap26-baseline-dev/bench/"
 
+# Expected recall per task level from sisap2025.py comments.
+# Actual recall on your hardware will be identical (deterministic algorithm).
+EXPECTED_RECALL = {
+    "task2":    81.7,
+    "task2:85": 86.5,
+    "task2:90": 91.1,
+    "task2:95": 95.8,
+    "task2:98": 98.6,
+}
+
 
 def load_sacct_csv(path: Path) -> dict:
     """Load sacct CSV produced by summarise-bench.sh keyed by job_id string."""
@@ -152,7 +162,7 @@ def print_table(rows: list, sort_by: str):
 
     header = (
         f"{'Node':<12} {'CPUs':>4} {'JobID':>7}  "
-        f"{'Task':<10} {'State':<12} {'Wall time':>10} {'MaxRSS':>8}  "
+        f"{'Task':<10} {'Recall%':>7}  {'State':<12} {'Wall time':>10} {'MaxRSS':>8}  "
         f"{'Build(s)':>9} {'Query(s)':>9} {'Total(s)':>9}  "
         f"CPU model"
     )
@@ -163,13 +173,14 @@ def print_table(rows: list, sort_by: str):
 
     prev_node = None
     for r in rows:
-        # Blank line between nodes for readability when multiple quality levels
         if r["node"] != prev_node and prev_node is not None:
             print()
         prev_node = r["node"]
+        recall = EXPECTED_RECALL.get(r["task"], float("nan"))
+        recall_str = f"{recall:.1f}" if recall == recall else "n/a"
         print(
             f"{r['node']:<12} {r['cpus']:>4} {r['job_id']:>7}  "
-            f"{r['task']:<10} {r['state']:<12} {r['wall_time']:>10} {r['max_rss']:>8}  "
+            f"{r['task']:<10} {recall_str:>7}  {r['state']:<12} {r['wall_time']:>10} {r['max_rss']:>8}  "
             f"{fmt(r['build_s']):>9} {fmt(r['query_s']):>9} {fmt(r['total_s']):>9}  "
             f"{r['cpu_model']}"
         )
