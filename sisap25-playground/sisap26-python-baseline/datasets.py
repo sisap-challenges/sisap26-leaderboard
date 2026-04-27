@@ -56,16 +56,17 @@ DATASETS = {
     # ------------------------------------------------------------------ #
     'gooaq': {
         'task1': {
-            # Main dataset file.  The on-disk layout of the 'train' array
-            # is verified at runtime by load_real_vectors() in
-            # create-gooaq-small.py; pass it through as-is here and let
-            # FAISS normalise it during search.
+            # Main dataset file – actual on-disk filename from HuggingFace.
+            # local_fn avoids a download attempt when the file is already
+            # present (e.g. bind-mounted read-only on HPC).
             'url': SISAP25_BASE_URL + 'benchmark-dev-gooaq.h5',
+            'local_fn': os.path.join('data', 'gooaq', 'task1',
+                                     'benchmark-dev-gooaq.h5'),
             # Ground truth lives in a separate file.
             # knns shape: (N, 32) – row-major, 1-indexed, self-loop included.
             'gt_url': SISAP25_BASE_URL + 'allknn-benchmark-dev-gooaq.h5',
             'gt_local_fn': lambda dataset, task: os.path.join(
-                "data", dataset, task, "allknn-gooaq.h5"
+                'data', dataset, task, 'allknn-benchmark-dev-gooaq.h5'
             ),
             'data': lambda x: x['train'],
             'gt_I': lambda x: x['knns'],   # shape (N, 32), 1-indexed
