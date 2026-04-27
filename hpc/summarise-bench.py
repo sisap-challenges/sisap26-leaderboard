@@ -79,26 +79,16 @@ def parse_dir_name(name: str):
 
 
 def collect(output_base: Path, sacct: dict) -> list:
-    rows = []
+    # First pass: collect all rows grouped by node so we can drop cancelled
+    # duplicates (directories that have lscpu.txt but no h5 result file).
+    by_node = {}
     for d in sorted(output_base.iterdir()):
         if not d.is_dir():
             continue
         node, ncpus, job_id = parse_dir_name(d.name)
         slurm = sacct.get(job_id, {"state": "n/a", "elapsed": "n/a", "max_rss": "n/a"})
         h5 = find_result_h5(d)
-        if h5 is None:
-            rows.append({
-                "node": node, "cpus": ncpus, "job_id": job_id,
-                "cpu_model": cpu_model(d / "lscpu.txt"),
-                "state":     slurm["state"],
-                "wall_time": slurm["elapsed"],
-                "max_rss":   slurm["max_rss"],
-                "build_s":   float("nan"), "query_s": float("nan"),
-                "total_s":   float("nan"), "params": "",
-            })
-            continue
-        attrs = read_h5_attrs(h5)
-        rows.append({
+        row = {
             "node":      node,
             "cpus":      ncpus,
             "job_id":    job_id,
@@ -106,11 +96,29 @@ def collect(output_base: Path, sacct: dict) -> list:
             "state":     slurm["state"],
             "wall_time": slurm["elapsed"],
             "max_rss":   slurm["max_rss"],
-            "build_s":   attrs["buildtime"],
-            "query_s":   attrs["querytime"],
-            "total_s":   attrs["buildtime"] + attrs["querytime"],
-            "params":    attrs["params"],
-        })
+            "has_result": h5 is not None,
+            "build_s":   float("nan"),
+            "query_s":   float("nan"),
+            "total_s":   float("nan"),
+            "params":    "",
+        }
+        if h5 is not None:
+            attrs = read_h5_attrs(h5)
+            row.update({
+                "build_s": attrs["buildtime"],
+                "query_s": attrs["querytime"],
+                "total_s": attrs["buildtime"] + attrs["querytime"],
+                "params":  attrs["params"],
+            })
+        by_node.setdefault(node, []).append(row)
+
+    # Second pass: for each node prefer rows with results; only fall back to
+    # no-result rows when there is nothing else for that node.
+    rows = []
+    for node, candidates in by_node.items():
+        with_results = [r for r in candidates if r["has_result"]]
+        rows.extend(with_results if with_results else candidates)
+
     return rows
 
 

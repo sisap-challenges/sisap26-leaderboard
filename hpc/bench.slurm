@@ -23,17 +23,19 @@ OUTPUT_BASE="/home/maau/sisap26-baseline-dev/bench/"
 
 NODE=$(hostname -s)
 NCPUS=$SLURM_CPUS_PER_TASK
-OUTPUT_PATH="${OUTPUT_BASE}/${NODE}-${NCPUS}cpu-${SLURM_JOB_ID}"
+# OMP_NUM_THREADS can be pre-set by the caller to decouple the number of
+# threads from the number of allocated cores (e.g. request extra cores
+# solely for memory headroom while keeping the thread count fixed at 8).
+export OMP_NUM_THREADS=${OMP_NUM_THREADS:-$NCPUS}
+OUTPUT_PATH="${OUTPUT_BASE}/${NODE}-${OMP_NUM_THREADS}cpu-${SLURM_JOB_ID}"
 
 mkdir -p "$OUTPUT_PATH"
 
-export OMP_NUM_THREADS=$NCPUS
-
 echo "=== hforest benchmark ==="
-echo "Job ID   : $SLURM_JOB_ID"
-echo "Node     : $NODE"
-echo "CPUs     : $NCPUS"
-echo "Threads  : $OMP_NUM_THREADS"
+echo "Job ID     : $SLURM_JOB_ID"
+echo "Node       : $NODE"
+echo "Alloc CPUs : $NCPUS"
+echo "OMP threads: $OMP_NUM_THREADS"
 echo "Started  : $(date)"
 echo "Output   : $OUTPUT_PATH"
 echo
