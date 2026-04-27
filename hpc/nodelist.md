@@ -32,3 +32,12 @@ desktop13	CPU	8	32 GiB	None	1 Gbps Eth	400 GiB
 desktop14	CPU	8	32 GiB	None	1 Gbps Eth	400 GiB
 desktop15	CPU	8	32 GiB	None	1 Gbps Eth	400 GiB
 desktop16	CPU	8	32 GiB	None	1 Gbps Eth	400 GiB
+
+sinfo:
+     acltr    up 7-00:00:00 cn[3-7,12,18]
+     cores    up 7-00:00:00 cn[8,14-15]
+ cores_any    up 7-00:00:00 cn[3-4,6-7,12,16-18]
+ scavenge*    up 1-00:00:00 cn[3-19],desktop[1-9,12,15-16]
+      dgpu    up 10-00:00:0 desktop[1-9]
+      dgx1    up 3-00:00:00 dgx1
+     pcn15    up 13-08:00:0 cn15
