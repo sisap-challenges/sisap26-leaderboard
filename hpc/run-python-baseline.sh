@@ -13,9 +13,9 @@
 #   3. Update CONTAINER_PATH, DATASET_PATH, and OUTPUT_BASE below.
 
 # ---- Configure these paths for your HPC environment --------------------
-CONTAINER_PATH="/path/to/containers/python-baseline.sif"  # UPDATE
-DATASET_PATH="/path/to/sisap25/datasets"                  # UPDATE
-OUTPUT_BASE="/path/to/results"                            # UPDATE
+CONTAINER_PATH="/home/maau/sisap26-baseline-dev/python-sisap26-baseline.sif"  
+DATASET_PATH="/home/maau/sisap26-baseline-dev/data"                 
+OUTPUT_BASE="/home/maau/sisap26-baseline-dev/results"                         
 # ------------------------------------------------------------------------
 
 TASK=$1
