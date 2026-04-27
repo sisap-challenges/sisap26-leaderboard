@@ -36,7 +36,11 @@ echo
 
 # Run Task 1 evaluation
 echo "Starting Task 1 evaluation..."
-apptainer run \
+# sisap2025.py lives inside the container at /app/sisap2025.py (copied by the Dockerfile).
+# Use `apptainer exec --pwd /app` rather than `apptainer run` because the container's
+# CMD is `bash`; passing extra arguments to `apptainer run` would hand them to bash as
+# a script path, not execute them as a command.
+apptainer exec --pwd /app \
     -B $DATASET_PATH:/app/data:ro \
     -B $OUTPUT_PATH:/app/results:rw \
     $CONTAINER_PATH python sisap2025.py task1

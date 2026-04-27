@@ -108,7 +108,10 @@ apptainer exec hforest.sif python --version
 ### Test Container
 ```bash
 # Basic test
-apptainer exec hforest.sif python -c "
+# Note: hforest.so is built in-place under /app inside the container.
+# Use --pwd /app so Python can find it, or use `apptainer run` which
+# inherits the Dockerfile WORKDIR automatically.
+apptainer exec --pwd /app hforest.sif python -c "
 import sys
 print(f'Python version: {sys.version}')
 try:
@@ -162,7 +165,7 @@ echo
 
 # Run Task 1 evaluation
 echo "Starting Task 1 evaluation..."
-apptainer run \
+apptainer exec --pwd /app \
     -B $DATASET_PATH:/app/data:ro \
     -B $OUTPUT_PATH:/app/results:rw \
     $CONTAINER_PATH python sisap2025.py task1
@@ -205,7 +208,7 @@ mkdir -p $OUTPUT_PATH
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
 echo "Starting Task 2 evaluation (k-NN graph construction)..."
-apptainer run \
+apptainer exec --pwd /app \
     -B $DATASET_PATH:/app/data:ro \
     -B $OUTPUT_PATH:/app/results:rw \
     $CONTAINER_PATH python sisap2025.py task2
@@ -330,7 +333,7 @@ Based on SISAP25 challenge results:
 docker run --rm sisap25/hforest python -c "import hforest; print('OK')"
 
 # Test on HPC after conversion  
-apptainer exec hforest.sif python -c "import hforest; print('OK')"
+apptainer exec --pwd /app hforest.sif python -c "import hforest; print('OK')"
 
 # Check container contents
 apptainer exec hforest.sif ls -la /app/
