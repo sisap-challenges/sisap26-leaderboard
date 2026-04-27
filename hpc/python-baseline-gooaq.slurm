@@ -15,10 +15,9 @@ echo "Started: $(date)"
 echo
 
 # Paths (UPDATE THESE FOR YOUR HPC ENVIRONMENT)
-CONTAINER_PATH="/path/to/containers/python-baseline.sif"
-DATASET_PATH="/path/to/sisap25/datasets"   # must contain benchmark-dev-gooaq.h5
-                                            # and allknn-benchmark-dev-gooaq.h5
-OUTPUT_PATH="/path/to/results/python-baseline-gooaq-${SLURM_JOB_ID}"
+CONTAINER_PATH="/home/maau/sisap26-baseline-dev/python-sisap26-baseline.sif"  
+DATASET_PATH="/home/maau/sisap26-baseline-dev/data" 
+OUTPUT_PATH="/home/maau/sisap26-baseline-dev/results/python-baseline-gooaq-${SLURM_JOB_ID}"
 
 mkdir -p "$OUTPUT_PATH"
 
