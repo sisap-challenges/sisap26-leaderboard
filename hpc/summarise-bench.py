@@ -4,17 +4,15 @@ summarise-bench.py — summarise hforest benchmark results across nodes.
 
 For each completed run under OUTPUT_BASE it reports:
   - node name and CPU model (from lscpu.txt)
-  - SLURM wall time and peak RSS (from sacct)
+  - SLURM wall time and peak RSS (from sacct CSV written by summarise-bench.sh)
   - hforest build time and query/graph time (from result HDF5 attributes)
 
-Usage:
-    python summarise-bench.py [--output-base PATH] [--sort-by COLUMN]
-
-OUTPUT_BASE defaults to /home/maau/sisap26-baseline-dev/bench/
+Usage (via wrapper):
+    sbatch ... hpc/summarise-bench.sh [--sort-by COLUMN]
 """
 
 import argparse
-import subprocess
+import csv
 import sys
 from pathlib import Path
 
@@ -27,31 +25,19 @@ except ImportError:
 OUTPUT_BASE_DEFAULT = "/home/maau/sisap26-baseline-dev/bench/"
 
 
-def sacct_info(job_id: str) -> dict:
-    """Return elapsed wall time and peak RSS for a SLURM job via sacct."""
-    result = subprocess.run(
-        [
-            "sacct", "-j", job_id,
-            "--format=Elapsed,MaxRSS,State",
-            "--noheader", "--parsable2",
-            # Use the batch step which carries RSS; fall back to job summary
-            "--steps",
-        ],
-        capture_output=True, text=True,
-    )
-    best = {"elapsed": "n/a", "max_rss": "n/a", "state": "n/a"}
-    for line in result.stdout.strip().splitlines():
-        parts = line.split("|")
-        if len(parts) < 3:
-            continue
-        elapsed, rss, state = parts[0], parts[1], parts[2]
-        if elapsed:
-            best["elapsed"] = elapsed
-        if rss:
-            best["max_rss"] = rss
-        if state:
-            best["state"] = state
-    return best
+def load_sacct_csv(path: Path) -> dict:
+    """Load sacct CSV produced by summarise-bench.sh keyed by job_id string."""
+    data = {}
+    if path is None or not path.exists():
+        return data
+    with open(path) as f:
+        for row in csv.DictReader(f):
+            data[row["job_id"]] = {
+                "state":   row.get("state", "n/a"),
+                "elapsed": row.get("elapsed", "n/a"),
+                "max_rss": row.get("max_rss", "n/a"),
+            }
+    return data
 
 
 def cpu_model(lscpu_path: Path) -> str:
@@ -92,26 +78,26 @@ def parse_dir_name(name: str):
     return name, "?", "?"
 
 
-def collect(output_base: Path) -> list:
+def collect(output_base: Path, sacct: dict) -> list:
     rows = []
     for d in sorted(output_base.iterdir()):
         if not d.is_dir():
             continue
         node, ncpus, job_id = parse_dir_name(d.name)
+        slurm = sacct.get(job_id, {"state": "n/a", "elapsed": "n/a", "max_rss": "n/a"})
         h5 = find_result_h5(d)
         if h5 is None:
-            # Job may have failed or still running
             rows.append({
                 "node": node, "cpus": ncpus, "job_id": job_id,
                 "cpu_model": cpu_model(d / "lscpu.txt"),
-                "state": sacct_info(job_id)["state"],
-                "wall_time": "n/a", "max_rss": "n/a",
-                "build_s": float("nan"), "query_s": float("nan"),
-                "total_s": float("nan"), "params": "",
+                "state":     slurm["state"],
+                "wall_time": slurm["elapsed"],
+                "max_rss":   slurm["max_rss"],
+                "build_s":   float("nan"), "query_s": float("nan"),
+                "total_s":   float("nan"), "params": "",
             })
             continue
         attrs = read_h5_attrs(h5)
-        slurm = sacct_info(job_id)
         rows.append({
             "node":      node,
             "cpus":      ncpus,
@@ -135,18 +121,18 @@ def fmt(val, decimals=1):
         return str(val)
 
 
-def print_table(rows: list[dict], sort_by: str):
+def print_table(rows: list, sort_by: str):
     sort_keys = {
-        "node":    lambda r: r["node"],
-        "total":   lambda r: r["total_s"] if r["total_s"] == r["total_s"] else float("inf"),
-        "query":   lambda r: r["query_s"] if r["query_s"] == r["query_s"] else float("inf"),
-        "wall":    lambda r: r["wall_time"],
+        "node":  lambda r: r["node"],
+        "total": lambda r: r["total_s"] if r["total_s"] == r["total_s"] else float("inf"),
+        "query": lambda r: r["query_s"] if r["query_s"] == r["query_s"] else float("inf"),
+        "wall":  lambda r: r["wall_time"],
     }
     rows = sorted(rows, key=sort_keys.get(sort_by, sort_keys["total"]))
 
     header = (
         f"{'Node':<12} {'CPUs':>4} {'JobID':>7}  "
-        f"{'State':<10} {'Wall time':>10} {'MaxRSS':>8}  "
+        f"{'State':<12} {'Wall time':>10} {'MaxRSS':>8}  "
         f"{'Build(s)':>9} {'Query(s)':>9} {'Total(s)':>9}  "
         f"CPU model"
     )
@@ -157,13 +143,12 @@ def print_table(rows: list[dict], sort_by: str):
     for r in rows:
         print(
             f"{r['node']:<12} {r['cpus']:>4} {r['job_id']:>7}  "
-            f"{r['state']:<10} {r['wall_time']:>10} {r['max_rss']:>8}  "
+            f"{r['state']:<12} {r['wall_time']:>10} {r['max_rss']:>8}  "
             f"{fmt(r['build_s']):>9} {fmt(r['query_s']):>9} {fmt(r['total_s']):>9}  "
             f"{r['cpu_model']}"
         )
     print(sep)
 
-    # Quick recommendation
     finished = [r for r in rows if r["total_s"] == r["total_s"]]
     if finished:
         best = min(finished, key=lambda r: r["total_s"])
@@ -176,6 +161,8 @@ def main():
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--output-base", default=OUTPUT_BASE_DEFAULT,
                         help="Directory containing per-run result subdirectories")
+    parser.add_argument("--sacct-csv", default=None,
+                        help="CSV file with SLURM accounting data (written by summarise-bench.sh)")
     parser.add_argument("--sort-by", choices=["node", "total", "query", "wall"],
                         default="total",
                         help="Column to sort by (default: total)")
@@ -185,7 +172,8 @@ def main():
     if not base.exists():
         sys.exit(f"Output base not found: {base}")
 
-    rows = collect(base)
+    sacct = load_sacct_csv(Path(args.sacct_csv) if args.sacct_csv else None)
+    rows = collect(base, sacct)
     if not rows:
         sys.exit("No result directories found.")
 
