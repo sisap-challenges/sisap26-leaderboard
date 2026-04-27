@@ -40,10 +40,9 @@ done
 echo "Invoking summarise-bench.py inside container..."
 apptainer exec --pwd /app \
     -B /home/maau/sisap26-baseline-dev:/mnt \
-    -B /home/maau/git/sisap26-baseline-dev/hpc:/scripts:ro \
     -B "$SACCT_CSV":/tmp/sacct.csv:ro \
     "$CONTAINER" \
-    python3 /scripts/summarise-bench.py \
+    python3 /mnt/hpc/summarise-bench.py \
         --output-base /mnt/bench \
         --sacct-csv /tmp/sacct.csv \
         "$@"
