@@ -92,7 +92,7 @@ def parse_dir_name(name: str):
     return name, "?", "?"
 
 
-def collect(output_base: Path) -> list[dict]:
+def collect(output_base: Path) -> list:
     rows = []
     for d in sorted(output_base.iterdir()):
         if not d.is_dir():
