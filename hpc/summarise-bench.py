@@ -7,8 +7,11 @@ For each completed run under OUTPUT_BASE it reports:
   - SLURM wall time and peak RSS (from sacct CSV written by summarise-bench.sh)
   - hforest build time and query/graph time (from result HDF5 attributes)
 
+Works for both the competition runs (bench/, one quality level per node) and
+the max-resource runs (bench-maxres/, five quality levels per node).
+
 Usage (via wrapper):
-    sbatch ... hpc/summarise-bench.sh [--sort-by COLUMN]
+    sbatch ... hpc/summarise-bench.sh [--output-base PATH] [--sort-by COLUMN]
 """
 
 import argparse
@@ -50,15 +53,15 @@ def cpu_model(lscpu_path: Path) -> str:
     return "unknown"
 
 
-def find_result_h5(output_dir: Path):
-    """Return the first HDF5 result file found under output_dir."""
-    matches = list(output_dir.glob("gooaq/task2/hforest_*.h5"))
-    return matches[0] if matches else None
+def find_result_h5_files(output_dir: Path) -> list:
+    """Return all HDF5 result files found under output_dir, across all quality levels."""
+    return sorted(output_dir.glob("gooaq/*/hforest_*.h5"))
 
 
 def read_h5_attrs(h5_path: Path) -> dict:
     with h5py.File(h5_path, "r") as f:
         return {
+            "task":      str(f.attrs.get("task", "unknown")),
             "buildtime": float(f.attrs.get("buildtime", float("nan"))),
             "querytime": float(f.attrs.get("querytime", float("nan"))),
             "params":    str(f.attrs.get("params", "")),
@@ -79,45 +82,54 @@ def parse_dir_name(name: str):
 
 
 def collect(output_base: Path, sacct: dict) -> list:
-    # First pass: collect all rows grouped by node so we can drop cancelled
-    # duplicates (directories that have lscpu.txt but no h5 result file).
+    # First pass: build all candidate rows, keyed by node.
     by_node = {}
     for d in sorted(output_base.iterdir()):
         if not d.is_dir():
             continue
         node, ncpus, job_id = parse_dir_name(d.name)
         slurm = sacct.get(job_id, {"state": "n/a", "elapsed": "n/a", "max_rss": "n/a"})
-        h5 = find_result_h5(d)
-        row = {
-            "node":      node,
-            "cpus":      ncpus,
-            "job_id":    job_id,
-            "cpu_model": cpu_model(d / "lscpu.txt"),
-            "state":     slurm["state"],
-            "wall_time": slurm["elapsed"],
-            "max_rss":   slurm["max_rss"],
-            "has_result": h5 is not None,
-            "build_s":   float("nan"),
-            "query_s":   float("nan"),
-            "total_s":   float("nan"),
-            "params":    "",
-        }
-        if h5 is not None:
-            attrs = read_h5_attrs(h5)
-            row.update({
-                "build_s": attrs["buildtime"],
-                "query_s": attrs["querytime"],
-                "total_s": attrs["buildtime"] + attrs["querytime"],
-                "params":  attrs["params"],
-            })
-        by_node.setdefault(node, []).append(row)
+        h5_files = find_result_h5_files(d)
 
-    # Second pass: for each node prefer rows with results; only fall back to
-    # no-result rows when there is nothing else for that node.
+        if not h5_files:
+            # Job failed or still running — one placeholder row
+            by_node.setdefault(node, []).append({
+                "node": node, "cpus": ncpus, "job_id": job_id,
+                "cpu_model": cpu_model(d / "lscpu.txt"),
+                "state":     slurm["state"],
+                "wall_time": slurm["elapsed"],
+                "max_rss":   slurm["max_rss"],
+                "task":      "n/a",
+                "build_s":   float("nan"),
+                "query_s":   float("nan"),
+                "total_s":   float("nan"),
+                "has_result": False,
+            })
+            continue
+
+        # One row per quality level found
+        for h5 in h5_files:
+            attrs = read_h5_attrs(h5)
+            by_node.setdefault(node, []).append({
+                "node":      node,
+                "cpus":      ncpus,
+                "job_id":    job_id,
+                "cpu_model": cpu_model(d / "lscpu.txt"),
+                "state":     slurm["state"],
+                "wall_time": slurm["elapsed"],
+                "max_rss":   slurm["max_rss"],
+                "task":      attrs["task"],
+                "build_s":   attrs["buildtime"],
+                "query_s":   attrs["querytime"],
+                "total_s":   attrs["buildtime"] + attrs["querytime"],
+                "has_result": True,
+            })
+
+    # Second pass: for each node prefer rows with results over placeholders.
     rows = []
     for node, candidates in by_node.items():
         with_results = [r for r in candidates if r["has_result"]]
-        rows.extend(with_results if with_results else candidates)
+        rows.extend(with_results if with_results else candidates[:1])
 
     return rows
 
@@ -131,7 +143,7 @@ def fmt(val, decimals=1):
 
 def print_table(rows: list, sort_by: str):
     sort_keys = {
-        "node":  lambda r: r["node"],
+        "node":  lambda r: (r["node"], r["task"]),
         "total": lambda r: r["total_s"] if r["total_s"] == r["total_s"] else float("inf"),
         "query": lambda r: r["query_s"] if r["query_s"] == r["query_s"] else float("inf"),
         "wall":  lambda r: r["wall_time"],
@@ -140,7 +152,7 @@ def print_table(rows: list, sort_by: str):
 
     header = (
         f"{'Node':<12} {'CPUs':>4} {'JobID':>7}  "
-        f"{'State':<12} {'Wall time':>10} {'MaxRSS':>8}  "
+        f"{'Task':<10} {'State':<12} {'Wall time':>10} {'MaxRSS':>8}  "
         f"{'Build(s)':>9} {'Query(s)':>9} {'Total(s)':>9}  "
         f"CPU model"
     )
@@ -148,10 +160,16 @@ def print_table(rows: list, sort_by: str):
     print(sep)
     print(header)
     print(sep)
+
+    prev_node = None
     for r in rows:
+        # Blank line between nodes for readability when multiple quality levels
+        if r["node"] != prev_node and prev_node is not None:
+            print()
+        prev_node = r["node"]
         print(
             f"{r['node']:<12} {r['cpus']:>4} {r['job_id']:>7}  "
-            f"{r['state']:<12} {r['wall_time']:>10} {r['max_rss']:>8}  "
+            f"{r['task']:<10} {r['state']:<12} {r['wall_time']:>10} {r['max_rss']:>8}  "
             f"{fmt(r['build_s']):>9} {fmt(r['query_s']):>9} {fmt(r['total_s']):>9}  "
             f"{r['cpu_model']}"
         )
@@ -160,7 +178,7 @@ def print_table(rows: list, sort_by: str):
     finished = [r for r in rows if r["total_s"] == r["total_s"]]
     if finished:
         best = min(finished, key=lambda r: r["total_s"])
-        print(f"\nFastest: {best['node']} — {fmt(best['total_s'])}s total "
+        print(f"\nFastest: {best['node']} ({best['task']}) — {fmt(best['total_s'])}s total "
               f"(build {fmt(best['build_s'])}s + query {fmt(best['query_s'])}s)")
 
 
@@ -168,7 +186,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--output-base", default=OUTPUT_BASE_DEFAULT,
-                        help="Directory containing per-run result subdirectories")
+                        help="Directory containing per-run result subdirectories "
+                             "(default: bench/; use bench-maxres/ for max-resource runs)")
     parser.add_argument("--sacct-csv", default=None,
                         help="CSV file with SLURM accounting data (written by summarise-bench.sh)")
     parser.add_argument("--sort-by", choices=["node", "total", "query", "wall"],
