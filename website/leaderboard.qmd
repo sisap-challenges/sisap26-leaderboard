@@ -1,0 +1,261 @@
+---
+title: "Leaderboard"
+echo: false
+format: html
+---
+
+```{ojs}
+//| output: false
+db = DuckDBClient.of({
+  summary: FileAttachment("results/summary.parquet"),
+});
+
+function makeRow(r, rank, is_task1, threshold, showParams) {
+  const recallOk = r.recall >= threshold;
+
+  // Rank cell
+  const rankCell = document.createElement("td");
+  rankCell.style.textAlign = "right";
+  rankCell.style.padding = "4px 10px";
+  rankCell.style.borderBottom = "1px solid #eee";
+  rankCell.style.color = recallOk ? "inherit" : "#aaa";
+  rankCell.textContent = recallOk ? rank : "—";
+
+  // Team cell (primary) with optional repo link + BASELINE badge
+  const teamCell = document.createElement("td");
+  teamCell.style.padding = "4px 10px";
+  teamCell.style.borderBottom = "1px solid #eee";
+  const teamName = r.repo
+    ? `<a href="${r.repo}" target="_blank" rel="noopener">${r.team}</a>`
+    : r.team;
+  const badge = r.is_baseline
+    ? ` <span style="background:#e0e0e0;border-radius:3px;padding:1px 5px;font-size:0.72em;font-weight:600;color:#444;vertical-align:middle">BASELINE</span>`
+    : "";
+  teamCell.innerHTML = teamName + badge;
+
+  // Algorithm cell (secondary)
+  const algoCell = document.createElement("td");
+  algoCell.style.padding = "4px 10px";
+  algoCell.style.borderBottom = "1px solid #eee";
+  algoCell.style.color = "#666";
+  algoCell.textContent = r.algo;
+
+  // Recall cell
+  const recallCell = document.createElement("td");
+  recallCell.style.textAlign = "right";
+  recallCell.style.padding = "4px 10px";
+  recallCell.style.borderBottom = "1px solid #eee";
+  recallCell.style.color = recallOk ? "#1a7a1a" : "#cc2200";
+  recallCell.style.fontWeight = "600";
+  recallCell.textContent = d3.format(".4f")(r.recall) + (recallOk ? " ✓" : " ✗");
+
+  // Primary metric cell (total time for task1, QPS for task2/3)
+  const metricCell = document.createElement("td");
+  metricCell.style.textAlign = "right";
+  metricCell.style.padding = "4px 10px";
+  metricCell.style.borderBottom = "1px solid #eee";
+  metricCell.style.color = recallOk ? "inherit" : "#aaa";
+  metricCell.textContent = is_task1
+    ? d3.format(".2f")(r.total_time)
+    : d3.format(",.0f")(r.qps);
+
+  // Build / Query time cells
+  const buildCell = document.createElement("td");
+  buildCell.style.textAlign = "right";
+  buildCell.style.padding = "4px 10px";
+  buildCell.style.borderBottom = "1px solid #eee";
+  buildCell.style.color = recallOk ? "inherit" : "#aaa";
+  buildCell.textContent = d3.format(".2f")(r.buildtime);
+
+  const queryCell = document.createElement("td");
+  queryCell.style.textAlign = "right";
+  queryCell.style.padding = "4px 10px";
+  queryCell.style.borderBottom = "1px solid #eee";
+  queryCell.style.color = recallOk ? "inherit" : "#aaa";
+  queryCell.textContent = d3.format(".2f")(r.querytime);
+
+  const tr = document.createElement("tr");
+  tr.appendChild(rankCell);
+  tr.appendChild(teamCell);
+  tr.appendChild(algoCell);
+  tr.appendChild(recallCell);
+  tr.appendChild(metricCell);
+  tr.appendChild(buildCell);
+  tr.appendChild(queryCell);
+
+  if (showParams) {
+    const paramsCell = document.createElement("td");
+    paramsCell.style.padding = "4px 10px";
+    paramsCell.style.borderBottom = "1px solid #eee";
+    paramsCell.style.color = "#555";
+    paramsCell.style.fontSize = "0.85em";
+    paramsCell.textContent = r.params ?? "";
+    tr.appendChild(paramsCell);
+  }
+  return tr;
+}
+
+function makeTable(rows, is_task1, threshold, showParams) {
+  const thStyle = "text-align:left;padding:5px 10px;border-bottom:2px solid #ccc;white-space:nowrap";
+  const thRStyle = "text-align:right;padding:5px 10px;border-bottom:2px solid #ccc;white-space:nowrap";
+  const headers = [
+    ["#",                          thRStyle],
+    ["Team",                       thStyle],
+    ["Algorithm",                  thStyle],
+    ["Recall",                     thRStyle],
+    [is_task1 ? "Total time (s)" : "QPS", thRStyle],
+    ["Build (s)",                  thRStyle],
+    ["Query (s)",                  thRStyle],
+    ...(showParams ? [["Parameters", thStyle]] : [])
+  ];
+
+  const thead = document.createElement("thead");
+  const headerRow = document.createElement("tr");
+  headers.forEach(([h, style]) => {
+    const th = document.createElement("th");
+    th.setAttribute("style", style);
+    th.textContent = h;
+    headerRow.appendChild(th);
+  });
+  thead.appendChild(headerRow);
+
+  // Assign rank only to rows that meet threshold, in sorted order
+  let rank = 1;
+  const tbody = document.createElement("tbody");
+  rows.forEach(r => {
+    const assignedRank = r.recall >= threshold ? rank++ : null;
+    tbody.appendChild(makeRow(r, assignedRank, is_task1, threshold, showParams));
+  });
+
+  const table = document.createElement("table");
+  table.style.width = "100%";
+  table.style.borderCollapse = "collapse";
+  table.style.fontSize = "0.9em";
+  table.appendChild(thead);
+  table.appendChild(tbody);
+  return table;
+}
+```
+
+---
+
+## Task 1 — All-*k*-NN on dense embeddings (*k* = 15)
+
+Datasets: gooaq-small, wikipedia-small · Required recall ≥ 0.80 · Metric: total time, lower is better
+
+```{ojs}
+t1_datasets = db.sql`SELECT DISTINCT dataset FROM summary WHERE task = 'task1' ORDER BY dataset`
+viewof t1_dataset   = Inputs.select(t1_datasets.map(d => d.dataset), {label: "Dataset"})
+viewof t1_threshold = Inputs.range([0, 1], {value: 0.8, step: 0.01, label: "Recall threshold"})
+viewof t1_view_mode = Inputs.radio(["Best per team", "All runs"], {value: "Best per team", label: "View"})
+t1_raw = t1_view_mode === "Best per team"
+  ? db.sql`
+      WITH base AS (
+        SELECT team, repo, algo, is_baseline, params, recall,
+               buildtime + querytime AS total_time, buildtime, querytime,
+               recall >= ${t1_threshold} AS meets_threshold
+        FROM summary WHERE task = 'task1' AND dataset = ${t1_dataset}
+      ),
+      ranked AS (
+        SELECT *,
+          ROW_NUMBER() OVER (
+            PARTITION BY team, algo
+            ORDER BY meets_threshold DESC, total_time ASC
+          ) AS rn
+        FROM base
+      )
+      SELECT team, repo, algo, is_baseline, params, recall, total_time, buildtime, querytime
+      FROM ranked WHERE rn = 1`
+  : db.sql`SELECT team, repo, algo, is_baseline, params, recall,
+             buildtime + querytime AS total_time, buildtime, querytime
+           FROM summary WHERE task = 'task1' AND dataset = ${t1_dataset}`
+t1_rows = Array.from(t1_raw).sort((a, b) =>
+  (b.recall >= t1_threshold) - (a.recall >= t1_threshold) || a.total_time - b.total_time
+)
+```
+
+```{ojs}
+makeTable(t1_rows, true, t1_threshold, t1_view_mode === "All runs")
+```
+
+---
+
+## Task 2 — *k*-NN query search on dense embeddings (*k* = 30)
+
+Dataset: llama-dev · Required recall ≥ 0.80 · Metric: QPS, higher is better
+
+```{ojs}
+t2_datasets = db.sql`SELECT DISTINCT dataset FROM summary WHERE task = 'task2' ORDER BY dataset`
+viewof t2_dataset   = Inputs.select(t2_datasets.map(d => d.dataset), {label: "Dataset"})
+viewof t2_threshold = Inputs.range([0, 1], {value: 0.8, step: 0.01, label: "Recall threshold"})
+viewof t2_view_mode = Inputs.radio(["Best per team", "All runs"], {value: "Best per team", label: "View"})
+t2_raw = t2_view_mode === "Best per team"
+  ? db.sql`
+      WITH base AS (
+        SELECT team, repo, algo, is_baseline, params, recall,
+               buildtime + querytime AS total_time, throughput AS qps, buildtime, querytime,
+               recall >= ${t2_threshold} AS meets_threshold
+        FROM summary WHERE task = 'task2' AND dataset = ${t2_dataset}
+      ),
+      ranked AS (
+        SELECT *,
+          ROW_NUMBER() OVER (
+            PARTITION BY team, algo
+            ORDER BY meets_threshold DESC, qps DESC
+          ) AS rn
+        FROM base
+      )
+      SELECT team, repo, algo, is_baseline, params, recall, total_time, qps, buildtime, querytime
+      FROM ranked WHERE rn = 1`
+  : db.sql`SELECT team, repo, algo, is_baseline, params, recall,
+             buildtime + querytime AS total_time, throughput AS qps, buildtime, querytime
+           FROM summary WHERE task = 'task2' AND dataset = ${t2_dataset}`
+t2_rows = Array.from(t2_raw).sort((a, b) =>
+  (b.recall >= t2_threshold) - (a.recall >= t2_threshold) || b.qps - a.qps
+)
+```
+
+```{ojs}
+makeTable(t2_rows, false, t2_threshold, t2_view_mode === "All runs")
+```
+
+---
+
+## Task 3 — *k*-NN query search on sparse embeddings (*k* = 30)
+
+Dataset: fiqa-dev · Required recall ≥ 0.90 · Metric: QPS, higher is better
+
+```{ojs}
+t3_datasets = db.sql`SELECT DISTINCT dataset FROM summary WHERE task = 'task3' ORDER BY dataset`
+viewof t3_dataset   = Inputs.select(t3_datasets.map(d => d.dataset), {label: "Dataset"})
+viewof t3_threshold = Inputs.range([0, 1], {value: 0.9, step: 0.01, label: "Recall threshold"})
+viewof t3_view_mode = Inputs.radio(["Best per team", "All runs"], {value: "Best per team", label: "View"})
+t3_raw = t3_view_mode === "Best per team"
+  ? db.sql`
+      WITH base AS (
+        SELECT team, repo, algo, is_baseline, params, recall,
+               buildtime + querytime AS total_time, throughput AS qps, buildtime, querytime,
+               recall >= ${t3_threshold} AS meets_threshold
+        FROM summary WHERE task = 'task3' AND dataset = ${t3_dataset}
+      ),
+      ranked AS (
+        SELECT *,
+          ROW_NUMBER() OVER (
+            PARTITION BY team, algo
+            ORDER BY meets_threshold DESC, qps DESC
+          ) AS rn
+        FROM base
+      )
+      SELECT team, repo, algo, is_baseline, params, recall, total_time, qps, buildtime, querytime
+      FROM ranked WHERE rn = 1`
+  : db.sql`SELECT team, repo, algo, is_baseline, params, recall,
+             buildtime + querytime AS total_time, throughput AS qps, buildtime, querytime
+           FROM summary WHERE task = 'task3' AND dataset = ${t3_dataset}`
+t3_rows = Array.from(t3_raw).sort((a, b) =>
+  (b.recall >= t3_threshold) - (a.recall >= t3_threshold) || b.qps - a.qps
+)
+```
+
+```{ojs}
+makeTable(t3_rows, false, t3_threshold, t3_view_mode === "All runs")
+```

@@ -1,0 +1,30 @@
+project:
+  type: website
+
+website:
+  title: "SISAP 2026 Indexing Challenge"
+  navbar:
+    background: "#202020"
+    foreground: "rgba(255,255,255,0.85)"
+    logo: "https://www.sisap.org/2023/images/sisap.png"
+    logo-alt: "SISAP logo"
+    title: false
+    left:
+      - text: "SISAP Indexing Challenge"
+        href: index.qmd
+      - text: "Leaderboard"
+        href: leaderboard.qmd
+      - text: "Plots"
+        href: plots.qmd
+
+format:
+  html:
+    toc: false
+    theme:
+      - flatly
+      - sisap.scss
+    include-in-header:
+      text: |
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400&family=Abril+Fatface&display=swap" rel="stylesheet">

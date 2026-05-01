@@ -1,0 +1,123 @@
+/*-- scss:defaults --*/
+
+// Fonts — match SISAP challenges site
+$font-family-sans-serif: "PT Sans", Helvetica, Arial, sans-serif;
+$headings-font-family:   "PT Sans", Helvetica, Arial, sans-serif;
+$font-size-base: 1rem;           // ~17px via browser default 16px
+
+// Colors — from poole_hyde.css
+$body-color:       #515151;
+$headings-color:   #313131;
+$link-color:       #268bd2;      // Solarized blue
+$link-hover-color: #1a6aaa;
+
+// Sidebar
+$sidebar-bg:       #202020;      // very dark grey
+$sidebar-fg:       rgba(255,255,255,0.85);
+$sidebar-border:   #202020;
+
+// Navbar (top bar when sidebar not used)
+$navbar-bg:        #202020;
+$navbar-fg:        rgba(255,255,255,0.85);
+
+// Borders / backgrounds
+$border-color:     #e5e5e5;
+$table-border-color: #e5e5e5;
+$table-striped-bg: #f9f9f9;
+
+// Code
+$code-bg:          rgb(203, 214, 205);  // muted sage-green (inline code)
+$pre-bg:           hsl(0, 0%, 94%);     // light grey
+
+/*-- scss:rules --*/
+
+@import url('https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400&family=Abril+Fatface&display=swap');
+
+// --- Navbar: site title link styled with Abril Fatface ---
+.navbar-brand,
+.navbar .nav-link:first-child,
+.navbar-nav > li:first-child > .nav-link {
+  font-family: "Abril Fatface", serif !important;
+  font-size: 1.15rem !important;
+  color: #fff !important;
+  opacity: 1 !important;
+}
+
+// Navbar logo sizing
+.navbar-logo {
+  max-height: 32px;
+  margin-right: 0.5rem;
+}
+
+// --- Headings with ruled separators (Franklin style) ---
+h1 {
+  border-bottom: 3px double #d0d0d0;
+  padding-bottom: 0.25em;
+  margin-bottom: 0.75em;
+}
+
+h2 {
+  border-bottom: 1px solid #d0d0d0;
+  padding-bottom: 0.15em;
+  margin-bottom: 0.5em;
+}
+
+// --- Tables ---
+table {
+  font-size: 0.9em;
+  border: 1px solid #e5e5e5;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  background-color: #f2f2f2;
+  border-bottom: 2px solid #ccc;
+  padding: 6px 10px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+td {
+  padding: 5px 10px;
+  border-bottom: 1px solid #eee;
+}
+
+tr:nth-child(odd) td {
+  background-color: #f9f9f9;
+}
+
+// --- Recall colour classes used in leaderboard OJS ---
+.recall-ok  { color: #1a7a1a; font-weight: 600; }
+.recall-bad { color: #cc2200; font-weight: 600; }
+
+// BASELINE badge
+.badge-baseline {
+  background: #e0e0e0;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 0.72em;
+  font-weight: 600;
+  color: #444;
+  vertical-align: middle;
+}
+
+// --- .important and .definition callout boxes (sisap.css) ---
+.important {
+  background: lemonchiffon;
+  padding: 0.5em;
+}
+
+.definition {
+  background: aliceblue;
+  border-left: 5px solid cornflowerblue;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+// --- Inline code tint ---
+code {
+  background-color: rgb(203, 214, 205);
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+}

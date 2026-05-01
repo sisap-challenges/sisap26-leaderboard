@@ -1,0 +1,25 @@
+---
+title: "SISAP 2026 Indexing Challenge"
+---
+
+## Overview
+
+The **SISAP 2026 Indexing Challenge** benchmarks approximate nearest-neighbor and
+sparse retrieval algorithms at scale. Participants submit a GitHub repository
+containing a Docker-based solution; the evaluation pipeline runs each solution
+on the official datasets and records build time, query time, and recall.
+
+Three tasks are evaluated:
+
+| Task | Description | Dataset(s) | Required recall |
+|------|-------------|------------|-----------------|
+| **Task 1** | All-*k*-NN on dense embeddings (*k* = 15) | gooaq-small, wikipedia-small | ≥ 0.80 |
+| **Task 2** | *k*-NN query search on dense embeddings (*k* = 30) | llama-dev | ≥ 0.80 |
+| **Task 3** | *k*-NN query search on sparse embeddings (*k* = 30) | fiqa-dev, nq | ≥ 0.90 |
+
+The **throughput** metric is:
+
+- **Task 1**: total vectors ÷ (build time + query time)
+- **Tasks 2 & 3**: number of queries ÷ query time
+
+See the [Leaderboard](leaderboard.qmd) for current results and the [Plots](plots.qmd) page for recall/QPS Pareto frontiers.

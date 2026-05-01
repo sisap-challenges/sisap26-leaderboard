@@ -1,0 +1,238 @@
+---
+title: "Recall / QPS Plots"
+echo: false
+format:
+  dashboard:
+    orientation: columns
+---
+
+## Column {width=23%}
+
+:::{.card .fill}
+Select a task and dataset, then set the recall threshold (dashed line).
+Hover over the Pareto plot to slice at any recall value and update the ranking bar chart.
+Click team names below to highlight them.
+:::
+
+```{ojs}
+//| output: false
+db = DuckDBClient.of({
+  summary: FileAttachment("results/summary.parquet"),
+});
+tasks  = db.sql`SELECT DISTINCT task FROM summary ORDER BY task`
+teams  = db.sql`SELECT DISTINCT team, is_baseline FROM summary ORDER BY team`
+
+colors  = Array.from(d3["schemeTableau10"]).toReversed();
+ncolors = colors.length;
+```
+
+```{ojs}
+//| output: false
+mutable_color_map = new Mutable(new Map());
+color_map = mutable_color_map.generator
+```
+
+```{ojs}
+//| fill: false
+viewof selected_task = Inputs.select(
+  tasks.map(d => d.task),
+  {value: "task1", label: "Task"}
+);
+
+filtered_datasets = db.sql`
+  SELECT DISTINCT dataset FROM summary WHERE task = ${selected_task} ORDER BY dataset
+`
+
+viewof selected_dataset = Inputs.select(
+  filtered_datasets.map(d => d.dataset),
+  {label: "Dataset"}
+);
+
+default_threshold = (selected_task === "task3") ? 0.9 : 0.8;
+
+viewof recall_threshold = Inputs.range([0, 1], {
+  value: default_threshold,
+  step: 0.01,
+  label: "Recall threshold"
+});
+```
+
+```{ojs}
+//| title: Teams
+{
+  const all_teams = Array.from(teams);
+
+  const container = htl.html`<div></div>`;
+
+  d3.select(container)
+    .append("p")
+    .text(`Click to highlight up to ${ncolors} teams. ★ = organiser baseline`);
+
+  const legend = d3.select(container)
+    .append("div")
+    .style("display", "flex")
+    .style("flex-direction", "row")
+    .style("flex-wrap", "wrap")
+    .style("gap", "4pt");
+
+  legend.selectAll("div")
+    .data(all_teams)
+    .join("div")
+    .style("border-bottom", d => `solid 6px ${color_map.has(d.team) ? color_map.get(d.team) : "lightgray"}`)
+    .style("border-top",    "solid 1px lightgray")
+    .style("border-left",   "solid 1px lightgray")
+    .style("border-right",  "solid 1px lightgray")
+    .style("border-radius", "4px")
+    .style("padding", "3pt 6pt")
+    .style("cursor", "pointer")
+    .on("click", (event, d) => {
+      const key = d.team;
+      let cm = new Map(color_map);
+      if (cm.has(key)) {
+        colors.push(cm.get(key));
+        cm.delete(key);
+      } else {
+        const c = colors.pop();
+        if (c !== undefined) cm.set(key, c);
+      }
+      mutable_color_map.value = cm;
+    })
+    .text(d => d.is_baseline ? d.team + " ★" : d.team);
+
+  return container;
+}
+```
+
+## Column
+
+### Row {height=55%}
+
+```{ojs}
+//| output: false
+is_task1 = selected_task === "task1";
+y_label  = is_task1 ? "Total time (s)" : "QPS";
+y_field  = is_task1 ? "total_time" : "throughput";
+
+pareto = db.sql`
+WITH ranked_points AS (
+  SELECT
+    team, algo, params, is_baseline,
+    throughput,
+    buildtime + querytime AS total_time,
+    recall,
+    CASE WHEN task = 'task1'
+         THEN 1.0 / NULLIF(buildtime + querytime, 0)
+         ELSE throughput
+    END AS perf,
+    ROW_NUMBER() OVER (PARTITION BY team ORDER BY
+      CASE WHEN task = 'task1'
+           THEN 1.0 / NULLIF(buildtime + querytime, 0)
+           ELSE throughput
+      END) AS rank_perf,
+    ROW_NUMBER() OVER (PARTITION BY team ORDER BY recall) AS rank_recall
+  FROM summary
+  WHERE task = ${selected_task} AND dataset = ${selected_dataset}
+),
+non_dominated AS (
+  SELECT r1.team, r1.algo, r1.params, r1.is_baseline,
+         r1.throughput, r1.total_time, r1.recall
+  FROM ranked_points r1
+  LEFT JOIN ranked_points r2
+    ON  r1.team = r2.team
+    AND ((r1.rank_perf < r2.rank_perf AND r1.rank_recall <= r2.rank_recall) OR
+         (r1.rank_perf <= r2.rank_perf AND r1.rank_recall < r2.rank_recall))
+  WHERE r2.recall IS NULL
+)
+SELECT * FROM non_dominated ORDER BY team, recall
+`
+highlighted = pareto.filter(d => color_map.has(d.team));
+background  = pareto.filter(d => !color_map.has(d.team));
+```
+
+```{ojs}
+//| height: 100%
+//| title: "Recall vs performance (Pareto frontier)"
+viewof paretoplot = Plot.plot({
+  style: {fontSize: "10pt"},
+  x: {domain: [0, 1], grid: true, label: "Recall"},
+  y: {type: "log", grid: true, label: y_label, reverse: is_task1},
+  marks: [
+    Plot.ruleX([recall_threshold], {stroke: "steelblue", strokeDasharray: "4,3", strokeWidth: 1.5}),
+    Plot.ruleY([1]),
+    Plot.ruleX([0]),
+    Plot.line(background, {
+      x: "recall", y: y_field, stroke: "lightgray",
+      z: "team", marker: "circle-stroke", tip: false
+    }),
+    Plot.dot(background, {
+      x: "recall", y: y_field, stroke: "lightgray", fill: "lightgray",
+      title: d => `${d.team} / ${d.algo}\n${d.params}`,
+      tip: true
+    }),
+    Plot.line(highlighted, {
+      x: "recall", y: y_field,
+      stroke: d => color_map.get(d.team),
+      z: "team", marker: "circle-stroke", tip: false
+    }),
+    Plot.dot(highlighted, {
+      x: "recall", y: y_field,
+      stroke: d => color_map.get(d.team),
+      fill:   d => color_map.get(d.team),
+      title: d => `${d.team} / ${d.algo}\n${d.params}`,
+      tip: true
+    }),
+    Plot.ruleX(background, Plot.pointerX({x: "recall", py: y_field, stroke: "red"}))
+  ]
+})
+```
+
+### Row {height=45%}
+
+```{ojs}
+//| output: false
+dynamic_threshold = paretoplot ? paretoplot.recall : recall_threshold;
+rankdata = db.sql`
+  SELECT team, is_baseline,
+         MIN(buildtime + querytime) AS total_time,
+         MAX(throughput) AS throughput
+  FROM summary
+  WHERE recall > ${dynamic_threshold}
+    AND task    = ${selected_task}
+    AND dataset = ${selected_dataset}
+  GROUP BY team, is_baseline
+`
+rank_metric   = is_task1 ? "total_time" : "throughput";
+rank_sort     = is_task1 ? "x" : "-x";
+rank_x_label  = is_task1 ? "Total time (s)" : "QPS";
+half = is_task1
+  ? d3.max(rankdata, d => d.total_time) / 2
+  : d3.max(rankdata, d => d.throughput) / 2;
+```
+
+```{ojs}
+//| title: "Ranking at selected recall threshold"
+Plot.plot({
+  style: {fontSize: "12pt"},
+  marginLeft: 180,
+  x: {label: rank_x_label},
+  marks: [
+    Plot.ruleY([0]),
+    Plot.barX(rankdata, {
+      y: "team",
+      x: rank_metric,
+      fill: d => color_map.has(d.team) ? color_map.get(d.team) : (d.is_baseline ? "#aaaaaa" : "#cccccc"),
+      sort: {y: rank_sort}
+    }),
+    Plot.text(rankdata.filter(d => d[rank_metric] < half), {
+      y: "team", x: rank_metric,
+      text: d => is_task1 ? d3.format(".1f")(d.total_time) : d3.format(".0f")(d.throughput),
+      dx: 10, textAnchor: "start", fill: "black"
+    }),
+    Plot.text(rankdata.filter(d => d[rank_metric] >= half), {
+      y: "team", x: rank_metric,
+      text: d => is_task1 ? d3.format(".1f")(d.total_time) : d3.format(".0f")(d.throughput),
+      dx: -10, textAnchor: "end", fill: "white"
+    })
+  ]
+})
+```
