@@ -37,30 +37,48 @@ CSV_SOURCES = (
         "threshold": 0.8,
         "n_queries": 6_400_000,
         "url": "https://files.webis.de/data-in-progress/data-research/sisap-2025/task-1-wikipedia-20260614-test.csv",
-    },
-    {
+    }, {
+        "task": "task1",
+        "dataset": "wikipedia-small",
+        "threshold": 0.8,
+        # TODO
+        "n_queries": 200_000,
+        "url": "https://files.webis.de/data-in-progress/data-research/sisap-2025/task-1-wikipedia-small.csv",
+    }, {
         "task": "task2",
         "dataset": "llama-eval",
         "threshold": 0.8,
         # TODO
         "n_queries": 10_000,
         "url": "https://files.webis.de/data-in-progress/data-research/sisap-2025/task-2-llama.csv",
-    },
-    {
+    }, {
         "task": "task2",
         "dataset": "llama-pg174",
         "threshold": 0.8,
         # TODO
         "n_queries": 10_000,
         "url": "https://files.webis.de/data-in-progress/data-research/sisap-2025/task-2-llama-pg174.csv",
-    },
-    {
+    }, {
+        "task": "task2",
+        "dataset": "llama-dev",
+        "threshold": 0.8,
+        # TODO
+        "n_queries": 10_000,
+        "url": "https://files.webis.de/data-in-progress/data-research/sisap-2025/task-2-llama-dev.csv",
+    }, {
         "task": "task3",
         "dataset": "nq-eval",
         "threshold": 0.8,
         # TODO
         "n_queries": 10_000,
         "url": "https://files.webis.de/data-in-progress/data-research/sisap-2025/task-3-nq-20260610-test.csv",
+    }, {
+        "task": "task3",
+        "dataset": "fiqa-dev",
+        "threshold": 0.8,
+        # TODO
+        "n_queries": 10_000,
+        "url": "https://files.webis.de/data-in-progress/data-research/sisap-2025/task-3-fiqa.csv",
     },
 )
 
@@ -103,6 +121,8 @@ def clean_scalar(value: object) -> str:
 def parse_float(value: object, field_name: str, source_url: str) -> float:
     text = clean_scalar(value)
     if text == "":
+        return 0
+    if text == "TODO":
         return 0
     try:
         return float(text)
