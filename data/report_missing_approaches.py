@@ -23,6 +23,7 @@ FILENAME_DEFAULTS = {
 DATASET_ALIASES = {
     "benchmark-dev-wikipedia-bge-m3-small": "wikipedia-small",
     "benchmark-eval-wikipedia-bge-m3+goldstandard": "wikipedia-eval",
+    "benchmark-dev-wikipedia-bge-m3": "wikipedia-dev",
 }
 
 
@@ -34,6 +35,7 @@ DS_TO_TIRA = {
     "llama-dev": "task-2-llama-dev-20260629-training",
     "nq-eval": "task-3-nq-20260610-test",
     "fiqa-dev": "task-3-fiqa-20260630-training",
+    "wikipedia-dev": "task-1-wikipedia-dev-20260701-training",
 }
 
 DS_TO_PATH = {
@@ -44,6 +46,7 @@ DS_TO_PATH = {
     "llama-dev": "/mnt/ceph/storage/web/files/data-in-progress/data-research/sisap-2025/task-2-llama-dev/",
     "nq-eval": "/mnt/ceph/storage/web/files/data-in-progress/data-research/sisap-2025/task-3-nq-20260610-test/",
     "fiqa-dev": "/mnt/ceph/storage/web/files/data-in-progress/data-research/sisap-2025/task-3-fiqa/",
+    "wikipedia-dev": "/mnt/ceph/storage/web/files/data-in-progress/data-research/sisap-2025/task-1-wikipedia-dev-20260701-training/"
 }
 
 def clean_scalar(value: object) -> str:

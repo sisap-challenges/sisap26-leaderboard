@@ -100,6 +100,13 @@ CSV_SOURCES = (
         # TODO
         "n_queries": 10_000,
         "file": "failed-entries-wikipedia-eval.csv",
+    }, {
+        "task": "task1",
+        "dataset": "wikipedia-dev",
+        "threshold": 0.8,
+        # TODO
+        "n_queries": 10_000,
+        "file": "failed-entries-wikipedia-dev.csv",
     },
 )
 
