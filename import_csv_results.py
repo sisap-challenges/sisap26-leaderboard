@@ -49,7 +49,7 @@ CSV_SOURCES = (
         "dataset": "wikipedia-dev",
         "threshold": 0.8,
         # TODO
-        "n_queries": 6_300_000,
+        "n_queries": 6_350_000,
         "file": "task-1-wikipedia-dev.csv",
     }, {
         "task": "task2",
@@ -77,14 +77,14 @@ CSV_SOURCES = (
         "dataset": "nq-eval",
         "threshold": 0.8,
         # TODO
-        "n_queries": 10_000,
+        "n_queries": 3452,
         "file": "task-3-nq-20260610-test.csv",
     }, {
         "task": "task3",
         "dataset": "fiqa-dev",
         "threshold": 0.8,
         # TODO
-        "n_queries": 10_000,
+        "n_queries": 6648,
         "file": "task-3-fiqa.csv",
     }, {
         "task": "task1",
@@ -105,7 +105,7 @@ CSV_SOURCES = (
         "dataset": "wikipedia-dev",
         "threshold": 0.8,
         # TODO
-        "n_queries": 10_000,
+        "n_queries": 6_350_000,
         "file": "failed-entries-wikipedia-dev.csv",
     },
 )
