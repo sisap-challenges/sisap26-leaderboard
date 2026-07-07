@@ -45,6 +45,13 @@ CSV_SOURCES = (
         "n_queries": 200_000,
         "file": "task-1-wikipedia-small.csv",
     }, {
+        "task": "task1",
+        "dataset": "wikipedia-dev",
+        "threshold": 0.8,
+        # TODO
+        "n_queries": 6_300_000,
+        "file": "task-1-wikipedia-dev.csv",
+    }, {
         "task": "task2",
         "dataset": "llama-eval",
         "threshold": 0.8,
@@ -79,6 +86,20 @@ CSV_SOURCES = (
         # TODO
         "n_queries": 10_000,
         "file": "task-3-fiqa.csv",
+    }, {
+        "task": "task1",
+        "dataset": "wikipedia-small",
+        "threshold": 0.8,
+        # TODO
+        "n_queries": 10_000,
+        "file": "failed-entries-wikipedia-small.csv",
+    }, {
+        "task": "task1",
+        "dataset": "wikipedia-eval",
+        "threshold": 0.8,
+        # TODO
+        "n_queries": 10_000,
+        "file": "failed-entries-wikipedia-eval.csv",
     },
 )
 
