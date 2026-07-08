@@ -35,9 +35,10 @@ See the [Leaderboard](leaderboard.qmd) for current results and the [Plots](plots
 All datasets are now public in the [SISAP 2026 dataset collection on Hugging Face](https://huggingface.co/datasets/SISAP-Challenges/SISAP2026/tree/main).
 
 The private test workloads were created in the following way: 
-- Task 1. See <../workload_generation/>. 
-- Task 2. We replaced the vectors with a random subset of unseen vectors from <https://huggingface.co/datasets/vector-index-bench/vibe/blob/main/README.md>.
-- Task 3. OpenAI's ChatGPT Pro 5.4 was used to paraphrase all queries in the corpus before embedding. Prompt: "Paraphrase all questions in nq/queries.jsonl", after which the modified queries were run through the same embedding model.
+
+- Task 1: See https://github.com/sisap-challenges/sisap26-leaderboard/tree/main/workload_generation.
+- Task 2: We replaced the vectors with a random subset of unseen vectors from <https://huggingface.co/datasets/vector-index-bench/vibe/blob/main/README.md>.
+- Task 3: OpenAI's ChatGPT Pro 5.4 was used to paraphrase all queries in the corpus before embedding. Prompt: "Paraphrase all questions in nq/queries.jsonl", after which the modified queries were run through the same embedding model.
 
 ## Credits
 This leaderboard used the evaluation website of [VIBE: Vector Index Benchmark for Embeddings
