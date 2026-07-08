@@ -30,8 +30,17 @@ jobs:
         uses: docker/setup-qemu-action@v3
       - name: 🧰 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.13
+      - name: 🧰 Install Dependencies
+        run: |
+          pip3 install pandas
       - name: 🏗️ Build the web app
-        run: ./import_csv_results.py; ./render_website.sh
+        run: |
+          ./import_csv_results.py
+          ./render_website.sh
 #      - name: 📤 Upload web app artifact
 #        uses: actions/upload-pages-artifact@v3
 #        with:
