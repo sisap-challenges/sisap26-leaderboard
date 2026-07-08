@@ -36,7 +36,7 @@ jobs:
           python-version: 3.13
       - name: 🧰 Install Dependencies
         run: |
-          pip3 install pandas yml
+          pip3 install pandas pyyaml
       - name: 🏗️ Build the web app
         run: |
           ./import_csv_results.py
