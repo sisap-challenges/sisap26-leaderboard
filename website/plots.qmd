@@ -20,7 +20,6 @@ db = DuckDBClient.of({
   summary: FileAttachment("results/summary.parquet"),
 });
 tasks  = db.sql`SELECT DISTINCT task FROM summary ORDER BY task`
-teams  = db.sql`SELECT DISTINCT team, is_baseline FROM summary ORDER BY team`
 
 colors  = Array.from(d3["schemeTableau10"]).toReversed();
 ncolors = colors.length;
@@ -32,6 +31,7 @@ mutable_color_map = new Mutable(new Map());
 color_map = mutable_color_map.generator
 ```
 
+:::{.card}
 ```{ojs}
 //| fill: false
 viewof selected_task = Inputs.select(
@@ -67,9 +67,17 @@ viewof recall_threshold = Inputs.range([0, 1], {
   label: "Recall threshold"
 });
 ```
+:::
 
 ```{ojs}
 //| title: Teams
+teams = db.sql`
+  SELECT DISTINCT team, is_baseline
+  FROM summary
+  WHERE task = ${selected_task} AND dataset = ${selected_dataset}
+  ORDER BY team
+`
+
 {
   const all_teams = Array.from(teams);
 
