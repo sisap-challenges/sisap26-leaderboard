@@ -38,20 +38,31 @@ viewof selected_task = Inputs.select(
   tasks.map(d => d.task),
   {value: "task1", label: "Task"}
 );
+```
 
+```{ojs}
+//| fill: false
 filtered_datasets = db.sql`
   SELECT DISTINCT dataset FROM summary WHERE task = ${selected_task} ORDER BY dataset
 `
 
 viewof selected_dataset = Inputs.select(
   filtered_datasets.map(d => d.dataset),
-  {label: "Dataset"}
+  {
+    value: ({
+      task1: "wikipedia-eval",
+      task2: "llama-eval",
+      task3: "nq-eval"
+    })[selected_task],
+    label: "Dataset"
+  }
 );
+```
 
-default_threshold = (selected_task === "task3") ? 0.9 : 0.8;
-
+```{ojs}
+//| fill: false
 viewof recall_threshold = Inputs.range([0, 1], {
-  value: default_threshold,
+  value: (selected_task === "task3") ? 0.9 : 0.8,
   step: 0.01,
   label: "Recall threshold"
 });

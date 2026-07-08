@@ -13,13 +13,21 @@ Three tasks are evaluated:
 
 | Task | Description | Dataset(s) | Required recall |
 |------|-------------|------------|-----------------|
-| **Task 1** | All-*k*-NN on dense embeddings (*k* = 15) | gooaq-small, wikipedia-small | ≥ 0.80 |
-| **Task 2** | *k*-NN query search on dense embeddings (*k* = 30) | llama-dev | ≥ 0.80 |
-| **Task 3** | *k*-NN query search on sparse embeddings (*k* = 30) | fiqa-dev, nq | ≥ 0.90 |
+| **Task 1** | All-*k*-NN on dense embeddings (*k* = 15) | wikipedia-small, wikipedia-dev (public), wikipedia-eval (private test set; now published) | ≥ 0.80 |
+| **Task 2** | *k*-NN query search on dense embeddings (*k* = 30) | llama-dev (public), llama-eval (private test set; now public), llama-pg174 (test variant; now public) | ≥ 0.80 |
+| **Task 3** | *k*-NN query search on sparse embeddings (*k* = 30) | fiqa-dev (public), nq-eval (private test set) | ≥ 0.90 |
 
 The **throughput** metric is:
 
 - **Task 1**: total vectors ÷ (build time + query time)
 - **Tasks 2 & 3**: number of queries ÷ query time
 
+For **Task 1**, `wikipedia-small` and `wikipedia-dev` are the public datasets, and `wikipedia-eval` was the private test set during evaluation.
+
+For **Task 2**, `llama-dev` is the public dataset, `llama-eval` was the private test set during evaluation, and `llama-pg174` is a variant of the test set.
+
+For **Task 3**, `fiqa-dev` is the public dataset and `nq-eval` was the private test set during evaluation.
+
 See the [Leaderboard](leaderboard.qmd) for current results and the [Plots](plots.qmd) page for recall/QPS Pareto frontiers.
+
+All datasets are now public in the [SISAP 2026 dataset collection on Hugging Face](https://huggingface.co/datasets/SISAP-Challenges/SISAP2026/tree/main).

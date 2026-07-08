@@ -25,6 +25,9 @@ import pandas as pd
 import yaml
 from pathlib import Path
 
+from github_repo_visibility import public_repo_or_private_label
+from paper_status import get_paper_status
+
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
@@ -179,7 +182,7 @@ def process_result(h5path: Path, team_dir: str, teams: dict) -> dict | None:
     # Team metadata: look up by directory name, fall back to sensible defaults
     team_meta = teams.get(team_dir, {})
     team      = team_meta.get("name", team_dir)
-    repo      = team_meta.get("repo", "")
+    repo      = public_repo_or_private_label(team_meta.get("repo", ""))
     is_base   = bool(team_meta.get("is_baseline", False))
 
     return {
@@ -188,6 +191,7 @@ def process_result(h5path: Path, team_dir: str, teams: dict) -> dict | None:
         "algo":        algo,
         "team":        team,
         "repo":        repo,
+        "paper_status": get_paper_status(team_dir, team),
         "is_baseline": is_base,
         "params":      params,
         "buildtime":   buildtime,

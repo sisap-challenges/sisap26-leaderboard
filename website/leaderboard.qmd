@@ -10,6 +10,17 @@ db = DuckDBClient.of({
   summary: FileAttachment("results/summary.parquet"),
 });
 
+function repoLabel(repo) {
+  if (typeof repo !== "string" || repo.length === 0) return "—";
+  if (!repo.startsWith("http")) return repo;
+  try {
+    const parts = new URL(repo).pathname.split("/").filter(Boolean);
+    return parts.at(-1) || repo;
+  } catch {
+    return repo;
+  }
+}
+
 function makeRow(r, rank, is_task1, threshold, showParams) {
   const recallOk = r.recall >= threshold;
 
@@ -21,17 +32,32 @@ function makeRow(r, rank, is_task1, threshold, showParams) {
   rankCell.style.color = recallOk ? "inherit" : "#aaa";
   rankCell.textContent = recallOk ? rank : "—";
 
-  // Team cell (primary) with optional repo link + BASELINE badge
+  // Team cell (primary) with BASELINE badge
   const teamCell = document.createElement("td");
   teamCell.style.padding = "4px 10px";
   teamCell.style.borderBottom = "1px solid #eee";
-  const teamName = r.repo
-    ? `<a href="${r.repo}" target="_blank" rel="noopener">${r.team}</a>`
-    : r.team;
   const badge = r.is_baseline
     ? ` <span style="background:#e0e0e0;border-radius:3px;padding:1px 5px;font-size:0.72em;font-weight:600;color:#444;vertical-align:middle">BASELINE</span>`
     : "";
-  teamCell.innerHTML = teamName + badge;
+  teamCell.innerHTML = r.team + badge;
+
+  // Code cell
+  const codeCell = document.createElement("td");
+  codeCell.style.padding = "4px 10px";
+  codeCell.style.borderBottom = "1px solid #eee";
+  codeCell.style.color = recallOk ? "inherit" : "#aaa";
+  if (typeof r.repo === "string" && r.repo.startsWith("http")) {
+    codeCell.innerHTML = `<a href="${r.repo}" target="_blank" rel="noopener">${repoLabel(r.repo)}</a>`;
+  } else {
+    codeCell.textContent = r.repo || "—";
+  }
+
+  // Paper cell
+  const paperCell = document.createElement("td");
+  paperCell.style.padding = "4px 10px";
+  paperCell.style.borderBottom = "1px solid #eee";
+  paperCell.style.color = recallOk ? "inherit" : "#aaa";
+  paperCell.textContent = r.paper_status || "---";
 
   // Algorithm cell (secondary)
   const algoCell = document.createElement("td");
@@ -77,6 +103,8 @@ function makeRow(r, rank, is_task1, threshold, showParams) {
   const tr = document.createElement("tr");
   tr.appendChild(rankCell);
   tr.appendChild(teamCell);
+  tr.appendChild(codeCell);
+  tr.appendChild(paperCell);
   tr.appendChild(algoCell);
   tr.appendChild(recallCell);
   tr.appendChild(metricCell);
@@ -101,6 +129,8 @@ function makeTable(rows, is_task1, threshold, showParams) {
   const headers = [
     ["#",                          thRStyle],
     ["Team",                       thStyle],
+    ["Code",                       thStyle],
+    ["Paper",                      thStyle],
     ["Algorithm",                  thStyle],
     ["Recall",                     thRStyle],
     [is_task1 ? "Total time (s)" : "QPS", thRStyle],
@@ -141,17 +171,17 @@ function makeTable(rows, is_task1, threshold, showParams) {
 
 ## Task 1 — All-*k*-NN on dense embeddings (*k* = 15)
 
-Datasets: gooaq-small, wikipedia-small · Required recall ≥ 0.80 · Metric: total time, lower is better
+Datasets: wikipedia-small, wikipedia-dev (public), wikipedia-eval (private test set; now published) · Required recall ≥ 0.80 · Metric: total time, lower is better
 
 ```{ojs}
 t1_datasets = db.sql`SELECT DISTINCT dataset FROM summary WHERE task = 'task1' ORDER BY dataset`
-viewof t1_dataset   = Inputs.select(t1_datasets.map(d => d.dataset), {label: "Dataset"})
+viewof t1_dataset   = Inputs.select(t1_datasets.map(d => d.dataset), {value: "wikipedia-eval", label: "Dataset"})
 viewof t1_threshold = Inputs.range([0, 1], {value: 0.8, step: 0.01, label: "Recall threshold"})
 viewof t1_view_mode = Inputs.radio(["Best per team", "All runs"], {value: "Best per team", label: "View"})
 t1_raw = t1_view_mode === "Best per team"
   ? db.sql`
       WITH base AS (
-        SELECT team, repo, algo, is_baseline, params, recall,
+        SELECT team, repo, paper_status, algo, is_baseline, params, recall,
                buildtime + querytime AS total_time, buildtime, querytime,
                recall >= ${t1_threshold} AS meets_threshold
         FROM summary WHERE task = 'task1' AND dataset = ${t1_dataset}
@@ -164,9 +194,9 @@ t1_raw = t1_view_mode === "Best per team"
           ) AS rn
         FROM base
       )
-      SELECT team, repo, algo, is_baseline, params, recall, total_time, buildtime, querytime
+      SELECT team, repo, paper_status, algo, is_baseline, params, recall, total_time, buildtime, querytime
       FROM ranked WHERE rn = 1`
-  : db.sql`SELECT team, repo, algo, is_baseline, params, recall,
+  : db.sql`SELECT team, repo, paper_status, algo, is_baseline, params, recall,
              buildtime + querytime AS total_time, buildtime, querytime
            FROM summary WHERE task = 'task1' AND dataset = ${t1_dataset}`
 t1_rows = Array.from(t1_raw).sort((a, b) =>
@@ -182,17 +212,17 @@ makeTable(t1_rows, true, t1_threshold, t1_view_mode === "All runs")
 
 ## Task 2 — *k*-NN query search on dense embeddings (*k* = 30)
 
-Dataset: llama-dev · Required recall ≥ 0.80 · Metric: QPS, higher is better
+Datasets: llama-dev (public), llama-eval (private test set; now public), llama-pg174 (test variant; now public) · Required recall ≥ 0.80 · Metric: QPS, higher is better
 
 ```{ojs}
 t2_datasets = db.sql`SELECT DISTINCT dataset FROM summary WHERE task = 'task2' ORDER BY dataset`
-viewof t2_dataset   = Inputs.select(t2_datasets.map(d => d.dataset), {label: "Dataset"})
+viewof t2_dataset   = Inputs.select(t2_datasets.map(d => d.dataset), {value: "llama-eval", label: "Dataset"})
 viewof t2_threshold = Inputs.range([0, 1], {value: 0.8, step: 0.01, label: "Recall threshold"})
 viewof t2_view_mode = Inputs.radio(["Best per team", "All runs"], {value: "Best per team", label: "View"})
 t2_raw = t2_view_mode === "Best per team"
   ? db.sql`
       WITH base AS (
-        SELECT team, repo, algo, is_baseline, params, recall,
+        SELECT team, repo, paper_status, algo, is_baseline, params, recall,
                buildtime + querytime AS total_time, throughput AS qps, buildtime, querytime,
                recall >= ${t2_threshold} AS meets_threshold
         FROM summary WHERE task = 'task2' AND dataset = ${t2_dataset}
@@ -205,9 +235,9 @@ t2_raw = t2_view_mode === "Best per team"
           ) AS rn
         FROM base
       )
-      SELECT team, repo, algo, is_baseline, params, recall, total_time, qps, buildtime, querytime
+      SELECT team, repo, paper_status, algo, is_baseline, params, recall, total_time, qps, buildtime, querytime
       FROM ranked WHERE rn = 1`
-  : db.sql`SELECT team, repo, algo, is_baseline, params, recall,
+  : db.sql`SELECT team, repo, paper_status, algo, is_baseline, params, recall,
              buildtime + querytime AS total_time, throughput AS qps, buildtime, querytime
            FROM summary WHERE task = 'task2' AND dataset = ${t2_dataset}`
 t2_rows = Array.from(t2_raw).sort((a, b) =>
@@ -223,17 +253,17 @@ makeTable(t2_rows, false, t2_threshold, t2_view_mode === "All runs")
 
 ## Task 3 — *k*-NN query search on sparse embeddings (*k* = 30)
 
-Dataset: fiqa-dev · Required recall ≥ 0.90 · Metric: QPS, higher is better
+Datasets: fiqa-dev (public), nq-eval (private test set) · Required recall ≥ 0.90 · Metric: QPS, higher is better
 
 ```{ojs}
 t3_datasets = db.sql`SELECT DISTINCT dataset FROM summary WHERE task = 'task3' ORDER BY dataset`
-viewof t3_dataset   = Inputs.select(t3_datasets.map(d => d.dataset), {label: "Dataset"})
+viewof t3_dataset   = Inputs.select(t3_datasets.map(d => d.dataset), {value: "nq-eval", label: "Dataset"})
 viewof t3_threshold = Inputs.range([0, 1], {value: 0.9, step: 0.01, label: "Recall threshold"})
 viewof t3_view_mode = Inputs.radio(["Best per team", "All runs"], {value: "Best per team", label: "View"})
 t3_raw = t3_view_mode === "Best per team"
   ? db.sql`
       WITH base AS (
-        SELECT team, repo, algo, is_baseline, params, recall,
+        SELECT team, repo, paper_status, algo, is_baseline, params, recall,
                buildtime + querytime AS total_time, throughput AS qps, buildtime, querytime,
                recall >= ${t3_threshold} AS meets_threshold
         FROM summary WHERE task = 'task3' AND dataset = ${t3_dataset}
@@ -246,9 +276,9 @@ t3_raw = t3_view_mode === "Best per team"
           ) AS rn
         FROM base
       )
-      SELECT team, repo, algo, is_baseline, params, recall, total_time, qps, buildtime, querytime
+      SELECT team, repo, paper_status, algo, is_baseline, params, recall, total_time, qps, buildtime, querytime
       FROM ranked WHERE rn = 1`
-  : db.sql`SELECT team, repo, algo, is_baseline, params, recall,
+  : db.sql`SELECT team, repo, paper_status, algo, is_baseline, params, recall,
              buildtime + querytime AS total_time, throughput AS qps, buildtime, querytime
            FROM summary WHERE task = 'task3' AND dataset = ${t3_dataset}`
 t3_rows = Array.from(t3_raw).sort((a, b) =>

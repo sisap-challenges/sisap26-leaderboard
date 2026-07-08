@@ -1,0 +1,269 @@
+{
+    "baremetal-vectors": {
+        "paper": 43,
+        "title": "Hardware-Sympathetic Optimization for High-Dimensional Vector Search SISAP 2026 Indexing Challenge: Task 1",
+        "submissions": [{
+          "tira-software": "arid-contrast",
+          "commit-in-paper": "0920c31",
+          "tasks": ["task1"]
+          }
+        ]
+    },
+
+    "crusty-coders": {
+      "paper": 49,
+      "title": "Crusty Coders SISAP Challenge 2026",
+      "submissions": [{
+          "tira-software": "frigid-dog",
+          "commit-in-paper": "8555408c99605b00f30dc92cf4016d082f6f3a7d",
+          "tasks": ["task2", "task3"]
+        }, {
+          "tira-software": "hampynn",
+          "commit-in-paper": "abbbe421dfb4e41e348ce334774e2fc917de00d3",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "hampynn-local-compile",
+          "commit-in-paper": "abbbe421dfb4e41e348ce334774e2fc917de00d3",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "sparse-viper",
+          "commit-in-paper": "dee6dc64089f7dc0ffb2c07fe3bade283841de18",
+          "tasks": ["task1"]
+        }
+      ]
+    },
+
+    "lzen402": {
+      "paper": 53,
+      "title": "SISAP Indexing Challenge 2026 Solution for Task 1 Using Random Projection Landmarks and NNDescent",
+      "author": "Linghan Zeng and Ninh Pham",
+      "submissions": ["tbd..."]
+    },
+
+    "basque-invaders": {
+      "paper": 54,
+      "title": "NMF-IVF: Learning Latent Semantic Topics for Approximate Retrieval",
+      "submissions": [{
+          "tira-software": "instant-rent",
+          "tasks": ["task3"]
+        }
+      ],
+      "todo": "#tira-cli run local --cpus 8 --memory 24g --input task-3-nq-20260610-test --out /mnt/ceph/storage/web/files/data-in-progress/data-research/sisap-2025/task-3-nq-20260610-test/ --approach sisap-2026/basque-invaders/instant-rent",
+    },
+
+    "plain-local-search": {
+      "paper": 55,
+      "title": "SISAP 2026 Indexing Challenge: Plain Local Search",
+      "submissions": [{
+          "tira-software": "PlainLS-config-1",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-2",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-3",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-4",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-5",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-6",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-7",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-8",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-9",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-10",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-11",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-12",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-13",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-14",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-15",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-1-local-compile",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-2-local-compile",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-3-local-compile",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-4-local-compile",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-5-local-compile",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-6-local-compile",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-7-local-compile",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-8-local-compile",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-9-local-compile",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-10-local-compile",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-11-local-compile",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-12-local-compile",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-13-local-compile",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-14-local-compile",
+          "tasks": ["task1"]
+        }, {
+          "tira-software": "PlainLS-config-15-local-compile",
+          "tasks": ["task1"]
+        }
+      ]
+    },
+
+    "tuskanny-seismic": {
+      "paper": 56,
+      "title": "Seismic at SISAP 2026: Inverted Indexes and κ-NN Graphs for Learned Sparse Retrieval",
+      "submissions": [{
+          "tira-software": "seismic",
+          "commit-in-paper": "5d38aee",
+          "tasks": ["task3"]
+        }
+      ]
+    },
+
+
+    "dream-team": {
+      "paper": 57,
+      "title": "Learned k-NN Graph Construction and Spherical Indexing for MIPS",
+      "submissions": [{
+          "tira-software": "resolving-sonar",
+          "commit-in-paper": "55991b0",
+          "tasks": ["task1", "task2"]
+        }
+      ],
+      "TODO": "# Wikipedia-dev needs to be executed again",
+    },
+
+    "tuskanny-kannolo": {
+      "paper": 58,
+      "title": "A Two-Stage Graph Index for Efficient Learned Sparse Retrieval with kANNolo",
+      "submissions": [{
+          "tira-software": "constant-headline",
+          "commit-in-paper": "5e497ae",
+          "tasks": ["task3"]
+        }
+      ]
+    },
+
+    "luis": {
+      "paper": 59,
+      "title": "Memory-Bounded Approximate Nearest Neighbour Search for Dense, MIPS, and Sparse Vectors: SISAP 2026 Indexing Challenge",
+      "submissions": [{
+          "tira-software": "primordial-foremast",
+          "commit-in-paper": "8ae9cda35f931f8cf8b3c840fa36082ca3abd15d",
+          "tasks": ["task1", "task2", "task3"],
+          "note": "does not finish on wikipedia-small, everything else works, maybe wikipedia small is too small",
+        }
+      ]
+    },
+
+    "ketchup-needs-nuggets": {
+      "paper": 60,
+      "title": "PiPNN for k-NN Graph Construction: Inverse-Size Merging and Diversified Beam Search",
+      "submissions": [{
+          "tira-software": "smart-valuation",
+          "tasks": ["task1"],
+          "note": "did-not-finish. Maik contacted team, will probably upload a new version. TODO",
+        }
+      ]
+    },
+
+    "deglib": {
+      "paper": 61,
+      "title": "Fast and Efficient Approximate Nearest Neighbor Search for High-Dimensional LLM Embeddings",
+      "submissions": [{
+          "tira-software": "inflammable-weapon",
+          "commit-in-paper": "62a4c34",
+          "tasks": ["task1", "task2"]
+        }
+      ]
+    },
+
+    "hanswurst": {
+      "paper": 62,
+      "title": "Maximum Inner Product Search with Decoupled Construction- and Query-Measures",
+      "submissions": [{
+          "tira-software": "final-compiled-different",
+          "commit-in-paper": "8da1fdf144e421dfc4f063241691bf5d41b0155f",
+          "tasks": ["task1", "task2", "task3"]
+        }, {
+          "tira-software": "_final",
+          "commit-in-paper": "8da1fdf144e421dfc4f063241691bf5d41b0155f",
+          "tasks": ["task1", "task2", "task3"]
+        }
+      ]
+    },
+
+    "wh-team": {
+      "paper": 63,
+      "title": "Three Regimes, One Architecture: Walsh–Hadamard Projections and Exact Rerank in the SISAP 2026 Indexing Challenge",
+      "submissions": [{
+          "tira-software": "late-shark",
+          "tasks": ["task1", "task2", "task3"]
+        }
+      ],
+      "todos": "Waiting for update of submission for task 1"
+    },
+
+    "seed-42": {
+      "paper": 64,
+      "title": "Static InvertedBlock Indexing and Parameterized Search for Approximate MIPS over Learned Sparse Representations",
+      "submissions": [{
+          "tira-software": "bordeaux-speed",
+          "tasks": ["task3"]
+        }
+      ],
+      "todos": "tira-cli run local --cpus 8 --memory 24g --input task-3-fiqa-20260630-training --out /mnt/ceph/storage/web/files/data-in-progress/data-research/sisap-2025/task-3-fiqa/ --approach sisap-2026/seed-42/bordeaux-speed"
+    },
+  
+    "pipnn": {
+      "paper": 65,
+      "title": "Fast k-NN Graph Building with Quantized PiPNN and Filtering",
+      "submissions": [{
+        "tira-software": "PiPNN",
+          "tasks": ["task1"]
+        }
+      ]
+    },
+    "bwotka": {
+      "note": "did not finalize the submission, said that it is unlikely that his software reaches the threshold"
+    }
+}

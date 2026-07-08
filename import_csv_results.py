@@ -16,14 +16,14 @@ from __future__ import annotations
 import argparse
 import ast
 import csv
-import io
 import json
 import sys
 from pathlib import Path
-from urllib.parse import urlparse
-from urllib.request import urlopen
 
 import pandas as pd
+
+from github_repo_visibility import public_repo_or_private_label
+from paper_status import get_paper_status
 
 
 SCRIPT_DIR = Path(__file__).parent
@@ -116,6 +116,7 @@ SUMMARY_COLUMNS = [
     "algo",
     "team",
     "repo",
+    "paper_status",
     "is_baseline",
     "params",
     "buildtime",
@@ -168,41 +169,13 @@ def parse_software_blob(blob: str) -> dict:
         return {}
 
 
-def normalize_github_repo(url: str) -> str:
-    url = clean_scalar(url)
-    if not url:
-        return ""
-
-    if url.startswith("git@github.com:"):
-        url = "https://github.com/" + url.removeprefix("git@github.com:")
-
-    if url.endswith(".git"):
-        url = url[:-4]
-
-    if "/tree/" in url:
-        url = url.split("/tree/", 1)[0]
-
-    if "/commit/" in url:
-        url = url.split("/commit/", 1)[0]
-
-    if url.endswith("/"):
-        url = url[:-1]
-
-    parsed = urlparse(url)
-    if parsed.scheme in {"http", "https"} and parsed.netloc == "github.com":
-        parts = [part for part in parsed.path.split("/") if part]
-        if len(parts) >= 2:
-            return f"https://github.com/{parts[0]}/{parts[1]}"
-    return url
-
-
 def extract_repo_url(software: dict) -> str:
     remotes = software.get("source_code_remotes") or []
     for remote in remotes:
-        repo = normalize_github_repo(remote.get("name", ""))
+        repo = public_repo_or_private_label(clean_scalar(remote.get("name", "")))
         if repo:
             return repo
-        repo = normalize_github_repo(remote.get("href", ""))
+        repo = public_repo_or_private_label(clean_scalar(remote.get("href", "")))
         if repo:
             return repo
     return ""
@@ -243,6 +216,7 @@ def import_source(source: dict) -> list[dict]:
                 "algo": algo,
                 "team": team,
                 "repo": repo,
+                "paper_status": get_paper_status(team),
                 "is_baseline": is_baseline(team, repo),
                 "params": params,
                 "buildtime": buildtime,
