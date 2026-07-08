@@ -2,6 +2,7 @@
 title: "Leaderboard"
 echo: false
 format: html
+page-layout: full
 ---
 
 ```{ojs}
@@ -23,6 +24,8 @@ function repoLabel(repo) {
 
 function makeRow(r, rank, is_task1, threshold, showParams) {
   const recallOk = r.recall >= threshold;
+  const textCellStyle = (color = recallOk ? "inherit" : "#aaa") =>
+    `padding:4px 10px;border-bottom:1px solid #eee;color:${color};white-space:normal;overflow-wrap:anywhere;word-break:break-word`;
 
   // Rank cell
   const rankCell = document.createElement("td");
@@ -34,36 +37,29 @@ function makeRow(r, rank, is_task1, threshold, showParams) {
 
   // Team cell (primary) with BASELINE badge
   const teamCell = document.createElement("td");
-  teamCell.style.padding = "4px 10px";
-  teamCell.style.borderBottom = "1px solid #eee";
+  teamCell.setAttribute("style", textCellStyle());
   const badge = r.is_baseline
-    ? ` <span style="background:#e0e0e0;border-radius:3px;padding:1px 5px;font-size:0.72em;font-weight:600;color:#444;vertical-align:middle">BASELINE</span>`
-    : "";
+   ? ` <span style="background:#e0e0e0;border-radius:3px;padding:1px 5px;font-size:0.72em;font-weight:600;color:#444;vertical-align:middle">BASELINE</span>`
+   : "";
   teamCell.innerHTML = r.team + badge;
 
   // Code cell
   const codeCell = document.createElement("td");
-  codeCell.style.padding = "4px 10px";
-  codeCell.style.borderBottom = "1px solid #eee";
-  codeCell.style.color = recallOk ? "inherit" : "#aaa";
+  codeCell.setAttribute("style", textCellStyle());
   if (typeof r.repo === "string" && r.repo.startsWith("http")) {
-    codeCell.innerHTML = `<a href="${r.repo}" target="_blank" rel="noopener">${repoLabel(r.repo)}</a>`;
+   codeCell.innerHTML = `<a href="${r.repo}" target="_blank" rel="noopener">${repoLabel(r.repo)}</a>`;
   } else {
-    codeCell.textContent = r.repo || "—";
+   codeCell.textContent = r.repo || "—";
   }
 
   // Paper cell
   const paperCell = document.createElement("td");
-  paperCell.style.padding = "4px 10px";
-  paperCell.style.borderBottom = "1px solid #eee";
-  paperCell.style.color = recallOk ? "inherit" : "#aaa";
+  paperCell.setAttribute("style", textCellStyle());
   paperCell.textContent = r.paper_status || "---";
 
   // Algorithm cell (secondary)
   const algoCell = document.createElement("td");
-  algoCell.style.padding = "4px 10px";
-  algoCell.style.borderBottom = "1px solid #eee";
-  algoCell.style.color = "#666";
+  algoCell.setAttribute("style", textCellStyle("#666"));
   algoCell.textContent = r.algo;
 
   // Recall cell
@@ -113,10 +109,7 @@ function makeRow(r, rank, is_task1, threshold, showParams) {
 
   if (showParams) {
     const paramsCell = document.createElement("td");
-    paramsCell.style.padding = "4px 10px";
-    paramsCell.style.borderBottom = "1px solid #eee";
-    paramsCell.style.color = "#555";
-    paramsCell.style.fontSize = "0.85em";
+    paramsCell.setAttribute("style", `${textCellStyle("#555")};font-size:0.85em`);
     paramsCell.textContent = r.params ?? "";
     tr.appendChild(paramsCell);
   }
@@ -124,8 +117,8 @@ function makeRow(r, rank, is_task1, threshold, showParams) {
 }
 
 function makeTable(rows, is_task1, threshold, showParams) {
-  const thStyle = "text-align:left;padding:5px 10px;border-bottom:2px solid #ccc;white-space:nowrap";
-  const thRStyle = "text-align:right;padding:5px 10px;border-bottom:2px solid #ccc;white-space:nowrap";
+  const thStyle = "text-align:left;padding:5px 10px;border-bottom:2px solid #ccc;white-space:normal";
+  const thRStyle = "text-align:right;padding:5px 10px;border-bottom:2px solid #ccc;white-space:normal";
   const headers = [
     ["#",                          thRStyle],
     ["Team",                       thStyle],
@@ -158,9 +151,10 @@ function makeTable(rows, is_task1, threshold, showParams) {
   });
 
   const table = document.createElement("table");
+  table.classList.add("leaderboard-table");
   table.style.width = "100%";
   table.style.borderCollapse = "collapse";
-  table.style.fontSize = "0.9em";
+  table.style.fontSize = "0.85em";
   table.appendChild(thead);
   table.appendChild(tbody);
   return table;

@@ -1,0 +1,50 @@
+name: Page
+on:
+  push:
+    branches:
+    - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy-sashboard:
+    name: "Deploy to GitHub Pages"
+#    environment:
+#      name: GitHub Pages
+#      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4     
+#      - name: 🧰 Setup GitHub Pages
+#        uses: actions/configure-pages@v5
+      - name: 🧰 Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: 🧰 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.13
+      - name: 🧰 Install Dependencies
+        run: |
+          pip3 install pandas yml
+      - name: 🏗️ Build the web app
+        run: |
+          ./import_csv_results.py
+          ./render_website.sh
+#      - name: 📤 Upload web app artifact
+#        uses: actions/upload-pages-artifact@v3
+#        with:
+#          path: website/_site/
+#      - name: 🚀 Deploy to GitHub Pages
+#        id: deployment
+#        uses: actions/deploy-pages@v4
