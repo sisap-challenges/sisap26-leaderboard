@@ -6,6 +6,12 @@ Build the website:
 ./render_website.sh
 ```
 
+Publish with GitHub Pages:
+
+1. Push to `main`.
+2. In GitHub repo settings, open `Pages` and set `Source` to `GitHub Actions`.
+3. Workflow in `.github/workflows/deploy-pages.yml` will build `website/_site` and deploy it.
+
 View it:
 
 ```

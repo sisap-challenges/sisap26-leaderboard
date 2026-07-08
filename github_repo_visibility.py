@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from functools import lru_cache
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
@@ -8,6 +9,17 @@ from urllib.request import Request, urlopen
 
 
 PRIVATE_REPO_LABEL = "Private"
+
+
+def github_request_headers() -> dict[str, str]:
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "User-Agent": "sisap26-website-importer",
+    }
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    return headers
 
 
 def normalize_github_repo(url: str) -> str:
@@ -53,13 +65,7 @@ def is_public_github_repo(url: str) -> bool:
         return False
 
     api_url = f"https://api.github.com/repos/{parts[0]}/{parts[1]}"
-    request = Request(
-        api_url,
-        headers={
-            "Accept": "application/vnd.github+json",
-            "User-Agent": "sisap26-website-importer",
-        },
-    )
+    request = Request(api_url, headers=github_request_headers())
 
     try:
         with urlopen(request, timeout=10) as response:
