@@ -4,7 +4,7 @@ title: "SISAP 2026 Indexing Challenge"
 
 ## Overview
 
-The **SISAP 2026 Indexing Challenge** benchmarks approximate nearest-neighbor and
+The [**SISAP 2026 Indexing Challenge**](https://sisap-challenges.github.io/2026/index.html) benchmarks approximate nearest-neighbor and
 sparse retrieval algorithms at scale. Participants submit a GitHub repository
 containing a Docker-based solution; the evaluation pipeline runs each solution
 on the official datasets and records build time, query time, and recall.
@@ -15,7 +15,7 @@ Three tasks are evaluated:
 |------|-------------|------------|-----------------|
 | **Task 1** | All-*k*-NN on dense embeddings (*k* = 15) | wikipedia-small, wikipedia-dev (public), wikipedia-eval (private test set; now published) | ≥ 0.80 |
 | **Task 2** | *k*-NN query search on dense embeddings (*k* = 30) | llama-dev (public), llama-eval (private test set; now public), llama-pg174 (test variant; now public) | ≥ 0.80 |
-| **Task 3** | *k*-NN query search on sparse embeddings (*k* = 30) | fiqa-dev (public), nq-eval (private test set) | ≥ 0.90 |
+| **Task 3** | *k*-NN query search on sparse embeddings (*k* = 30) | fiqa-dev (public), nq-eval (private test set; now public) | ≥ 0.90 |
 
 The **throughput** metric is:
 
@@ -30,4 +30,15 @@ For **Task 3**, `fiqa-dev` is the public dataset and `nq-eval` was the private t
 
 See the [Leaderboard](leaderboard.qmd) for current results and the [Plots](plots.qmd) page for recall/QPS Pareto frontiers.
 
+## Datasets
+
 All datasets are now public in the [SISAP 2026 dataset collection on Hugging Face](https://huggingface.co/datasets/SISAP-Challenges/SISAP2026/tree/main).
+
+The private test workloads were created in the following way: 
+- Task 1. See <../workload_generation/>. 
+- Task 2. We replaced the vectors with a random subset of unseen vectors from <https://huggingface.co/datasets/vector-index-bench/vibe/blob/main/README.md>.
+- Task 3. OpenAI's ChatGPT Pro 5.4 was used to paraphrase all queries in the corpus before embedding. Prompt: "Paraphrase all questions in nq/queries.jsonl", after which the modified queries were run through the same embedding model.
+
+## Credits
+This leaderboard used the evaluation website of [VIBE: Vector Index Benchmark for Embeddings
+](https://vector-index-bench.github.io/) by Jääsaari et al. as a starting point.
