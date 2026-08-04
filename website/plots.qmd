@@ -61,6 +61,19 @@ viewof selected_dataset = Inputs.select(
 
 ```{ojs}
 //| fill: false
+viewof scope = Inputs.radio(
+  ["Public leaderboard", "SISAP archived"],
+  {value: "SISAP archived", label: "Scope"}
+);
+```
+
+```{ojs}
+//| output: false
+scope_all = scope === "Public leaderboard"
+```
+
+```{ojs}
+//| fill: false
 viewof recall_threshold = Inputs.range([0, 1], {
   value: (selected_task === "task3") ? 0.9 : 0.8,
   step: 0.01,
@@ -75,6 +88,7 @@ teams = db.sql`
   SELECT DISTINCT team, is_baseline
   FROM summary
   WHERE task = ${selected_task} AND dataset = ${selected_dataset}
+    AND (${scope_all} OR has_paper OR is_baseline)
   ORDER BY team
 `
 
@@ -151,6 +165,7 @@ WITH ranked_points AS (
     ROW_NUMBER() OVER (PARTITION BY team ORDER BY recall) AS rank_recall
   FROM summary
   WHERE task = ${selected_task} AND dataset = ${selected_dataset}
+    AND (${scope_all} OR has_paper OR is_baseline)
 ),
 non_dominated AS (
   SELECT r1.team, r1.algo, r1.params, r1.is_baseline,

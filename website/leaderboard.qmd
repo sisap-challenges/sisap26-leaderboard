@@ -22,7 +22,7 @@ function repoLabel(repo) {
   }
 }
 
-function makeRow(r, rank, is_task1, threshold, showParams) {
+function makeRow(r, rank, is_task1, threshold, showParams, outOfCompetition = false) {
   const recallOk = r.recall >= threshold;
   const textCellStyle = (color = recallOk ? "inherit" : "#aaa") =>
     `padding:4px 10px;border-bottom:1px solid #eee;color:${color};white-space:normal;overflow-wrap:anywhere;word-break:break-word`;
@@ -33,14 +33,16 @@ function makeRow(r, rank, is_task1, threshold, showParams) {
   rankCell.style.padding = "4px 10px";
   rankCell.style.borderBottom = "1px solid #eee";
   rankCell.style.color = recallOk ? "inherit" : "#aaa";
-  rankCell.textContent = recallOk ? rank : "—";
+  rankCell.textContent = rank ?? "—";
 
   // Team cell (primary) with BASELINE badge
   const teamCell = document.createElement("td");
   teamCell.setAttribute("style", textCellStyle());
+  const chip = (text, bg, fg) =>
+    ` <span style="background:${bg};border-radius:3px;padding:1px 5px;font-size:0.72em;font-weight:600;color:${fg};vertical-align:middle">${text}</span>`;
   const badge = r.is_baseline
-   ? ` <span style="background:#e0e0e0;border-radius:3px;padding:1px 5px;font-size:0.72em;font-weight:600;color:#444;vertical-align:middle">BASELINE</span>`
-   : "";
+   ? chip("BASELINE", "#e0e0e0", "#444")
+   : (outOfCompetition ? chip("OUT OF COMPETITION", "#fde8d0", "#8a4b00") : "");
   teamCell.innerHTML = r.team + badge;
 
   // Code cell
@@ -116,7 +118,7 @@ function makeRow(r, rank, is_task1, threshold, showParams) {
   return tr;
 }
 
-function makeTable(rows, is_task1, threshold, showParams) {
+function makeTable(rows, is_task1, threshold, showParams, rankable = () => true) {
   const thStyle = "text-align:left;padding:5px 10px;border-bottom:2px solid #ccc;white-space:normal";
   const thRStyle = "text-align:right;padding:5px 10px;border-bottom:2px solid #ccc;white-space:normal";
   const headers = [
@@ -146,8 +148,9 @@ function makeTable(rows, is_task1, threshold, showParams) {
   let rank = 1;
   const tbody = document.createElement("tbody");
   rows.forEach(r => {
-    const assignedRank = r.recall >= threshold ? rank++ : null;
-    tbody.appendChild(makeRow(r, assignedRank, is_task1, threshold, showParams));
+    const ooc = !rankable(r);
+    const assignedRank = (r.recall >= threshold && !ooc) ? rank++ : null;
+    tbody.appendChild(makeRow(r, assignedRank, is_task1, threshold, showParams, ooc));
   });
 
   const table = document.createElement("table");
@@ -163,6 +166,24 @@ function makeTable(rows, is_task1, threshold, showParams) {
 
 ---
 
+The **public leaderboard** lists every run that was submitted. The **SISAP
+archived leaderboard** is the citable record accompanying the challenge
+overview paper: it is restricted to teams that contributed a
+system-description paper, plus the organizers' baselines.
+
+```{ojs}
+viewof scope = Inputs.radio(
+  ["Public leaderboard", "SISAP archived"],
+  {value: "SISAP archived", label: "Scope"}
+)
+```
+
+```{ojs}
+//| output: false
+inScope = (r) => scope === "Public leaderboard" || r.has_paper || r.is_baseline
+rankable = (r) => scope === "Public leaderboard" || r.scored
+```
+
 ## Task 1 — All-*k*-NN on dense embeddings (*k* = 15)
 
 Datasets: wikipedia-small, wikipedia-dev (public), wikipedia-eval (private test set; now published) · Required recall ≥ 0.80 · Metric: total time, lower is better
@@ -175,7 +196,7 @@ viewof t1_view_mode = Inputs.radio(["Best per team", "All runs"], {value: "Best 
 t1_raw = t1_view_mode === "Best per team"
   ? db.sql`
       WITH base AS (
-        SELECT team, repo, paper_status, algo, is_baseline, params, recall,
+        SELECT team, repo, paper_status, has_paper, scored, algo, is_baseline, params, recall,
                buildtime + querytime AS total_time, buildtime, querytime,
                recall >= ${t1_threshold} AS meets_threshold
         FROM summary WHERE task = 'task1' AND dataset = ${t1_dataset}
@@ -188,18 +209,19 @@ t1_raw = t1_view_mode === "Best per team"
           ) AS rn
         FROM base
       )
-      SELECT team, repo, paper_status, algo, is_baseline, params, recall, total_time, buildtime, querytime
+      SELECT team, repo, paper_status, has_paper, scored, algo, is_baseline, params, recall, total_time, buildtime, querytime
       FROM ranked WHERE rn = 1`
-  : db.sql`SELECT team, repo, paper_status, algo, is_baseline, params, recall,
+  : db.sql`SELECT team, repo, paper_status, has_paper, scored, algo, is_baseline, params, recall,
              buildtime + querytime AS total_time, buildtime, querytime
            FROM summary WHERE task = 'task1' AND dataset = ${t1_dataset}`
-t1_rows = Array.from(t1_raw).sort((a, b) =>
+t1_rows = Array.from(t1_raw).filter(inScope).sort((a, b) =>
+  (rankable(b) - rankable(a)) ||
   (b.recall >= t1_threshold) - (a.recall >= t1_threshold) || a.total_time - b.total_time
 )
 ```
 
 ```{ojs}
-makeTable(t1_rows, true, t1_threshold, t1_view_mode === "All runs")
+makeTable(t1_rows, true, t1_threshold, t1_view_mode === "All runs", rankable)
 ```
 
 ---
@@ -216,7 +238,7 @@ viewof t2_view_mode = Inputs.radio(["Best per team", "All runs"], {value: "Best 
 t2_raw = t2_view_mode === "Best per team"
   ? db.sql`
       WITH base AS (
-        SELECT team, repo, paper_status, algo, is_baseline, params, recall,
+        SELECT team, repo, paper_status, has_paper, scored, algo, is_baseline, params, recall,
                buildtime + querytime AS total_time, throughput AS qps, buildtime, querytime,
                recall >= ${t2_threshold} AS meets_threshold
         FROM summary WHERE task = 'task2' AND dataset = ${t2_dataset}
@@ -229,18 +251,19 @@ t2_raw = t2_view_mode === "Best per team"
           ) AS rn
         FROM base
       )
-      SELECT team, repo, paper_status, algo, is_baseline, params, recall, total_time, qps, buildtime, querytime
+      SELECT team, repo, paper_status, has_paper, scored, algo, is_baseline, params, recall, total_time, qps, buildtime, querytime
       FROM ranked WHERE rn = 1`
-  : db.sql`SELECT team, repo, paper_status, algo, is_baseline, params, recall,
+  : db.sql`SELECT team, repo, paper_status, has_paper, scored, algo, is_baseline, params, recall,
              buildtime + querytime AS total_time, throughput AS qps, buildtime, querytime
            FROM summary WHERE task = 'task2' AND dataset = ${t2_dataset}`
-t2_rows = Array.from(t2_raw).sort((a, b) =>
+t2_rows = Array.from(t2_raw).filter(inScope).sort((a, b) =>
+  (rankable(b) - rankable(a)) ||
   (b.recall >= t2_threshold) - (a.recall >= t2_threshold) || b.qps - a.qps
 )
 ```
 
 ```{ojs}
-makeTable(t2_rows, false, t2_threshold, t2_view_mode === "All runs")
+makeTable(t2_rows, false, t2_threshold, t2_view_mode === "All runs", rankable)
 ```
 
 ---
@@ -257,7 +280,7 @@ viewof t3_view_mode = Inputs.radio(["Best per team", "All runs"], {value: "Best 
 t3_raw = t3_view_mode === "Best per team"
   ? db.sql`
       WITH base AS (
-        SELECT team, repo, paper_status, algo, is_baseline, params, recall,
+        SELECT team, repo, paper_status, has_paper, scored, algo, is_baseline, params, recall,
                buildtime + querytime AS total_time, throughput AS qps, buildtime, querytime,
                recall >= ${t3_threshold} AS meets_threshold
         FROM summary WHERE task = 'task3' AND dataset = ${t3_dataset}
@@ -270,16 +293,17 @@ t3_raw = t3_view_mode === "Best per team"
           ) AS rn
         FROM base
       )
-      SELECT team, repo, paper_status, algo, is_baseline, params, recall, total_time, qps, buildtime, querytime
+      SELECT team, repo, paper_status, has_paper, scored, algo, is_baseline, params, recall, total_time, qps, buildtime, querytime
       FROM ranked WHERE rn = 1`
-  : db.sql`SELECT team, repo, paper_status, algo, is_baseline, params, recall,
+  : db.sql`SELECT team, repo, paper_status, has_paper, scored, algo, is_baseline, params, recall,
              buildtime + querytime AS total_time, throughput AS qps, buildtime, querytime
            FROM summary WHERE task = 'task3' AND dataset = ${t3_dataset}`
-t3_rows = Array.from(t3_raw).sort((a, b) =>
+t3_rows = Array.from(t3_raw).filter(inScope).sort((a, b) =>
+  (rankable(b) - rankable(a)) ||
   (b.recall >= t3_threshold) - (a.recall >= t3_threshold) || b.qps - a.qps
 )
 ```
 
 ```{ojs}
-makeTable(t3_rows, false, t3_threshold, t3_view_mode === "All runs")
+makeTable(t3_rows, false, t3_threshold, t3_view_mode === "All runs", rankable)
 ```

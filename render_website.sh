@@ -14,3 +14,9 @@ docker run --rm \
   "$IMAGE"
 
 echo "Done. Output is in $WEBSITE_DIR/_site/"
+
+if [[ "${1:-}" == "--serve" || "${1:-}" == "-s" ]]; then
+  PORT="${2:-8000}"
+  echo "Serving on http://localhost:$PORT ..."
+  cd "$WEBSITE_DIR/_site" && python3 -m http.server "$PORT"
+fi

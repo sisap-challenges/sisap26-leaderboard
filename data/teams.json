@@ -148,12 +148,24 @@
       ]
     },
 
-    "tuskanny-seismic": {
+    "tusKANNy": {
       "paper": 56,
+      "papers": [56, 58],
       "title": "Seismic at SISAP 2026: Inverted Indexes and κ-NN Graphs for Learned Sparse Retrieval",
+      "titles": [
+        "Seismic at SISAP 2026: Inverted Indexes and κ-NN Graphs for Learned Sparse Retrieval",
+        "A Two-Stage Graph Index for Efficient Learned Sparse Retrieval with kANNolo",
+      ],
+      "aliases": ["tuskanny-seismic", "tuskanny-kannolo"],
+      "scored-alias": "tuskanny-seismic",
+      "note": "Registered as two teams but is one team; merged under the rule that a team may enter each task once. Seismic is the scored entry; kANNolo is shown out of competition on the archived leaderboard and ranked normally on the live one.",
       "submissions": [{
           "tira-software": "seismic",
           "commit-in-paper": "5d38aee",
+          "tasks": ["task3"]
+        }, {
+          "tira-software": "constant-headline",
+          "commit-in-paper": "5e497ae",
           "tasks": ["task3"]
         }
       ]
@@ -170,17 +182,6 @@
         }
       ],
       "TODO": "# Wikipedia-dev needs to be executed again",
-    },
-
-    "tuskanny-kannolo": {
-      "paper": 58,
-      "title": "A Two-Stage Graph Index for Efficient Learned Sparse Retrieval with kANNolo",
-      "submissions": [{
-          "tira-software": "constant-headline",
-          "commit-in-paper": "5e497ae",
-          "tasks": ["task3"]
-        }
-      ]
     },
 
     "luis": {

@@ -22,6 +22,23 @@ The **throughput** metric is:
 - **Task 1**: total vectors ÷ (build time + query time)
 - **Tasks 2 & 3**: number of queries ÷ query time
 
+Query counts are 6,000,000 (wikipedia-eval), 6,350,000 (wikipedia-dev),
+200,000 (wikipedia-small), 1,000 (all three llama sets), 3,452 (nq-eval) and
+6,648 (fiqa-dev).
+
+## Two leaderboard views
+
+The [Leaderboard](leaderboard.qmd) and [Plots](plots.qmd) pages offer a **Scope**
+switch:
+
+- **SISAP archived** — the citable record accompanying the challenge overview
+  paper, restricted to teams that contributed a system-description paper, plus
+  the organizers' baselines. These are the official rankings reported of the
+  SISAP 2026 Indexing Challenge, and the default view until the conference in October 2026.
+- **Public leaderboard** — every submitted run, including teams that did not
+  participate in the SISAP 2026 Indexing Challenge. Stays open to new
+  submissions.
+
 For **Task 1**, `wikipedia-small` and `wikipedia-dev` are the public datasets, and `wikipedia-eval` was the private test set during evaluation.
 
 For **Task 2**, `llama-dev` is the public dataset, `llama-eval` was the private test set during evaluation, and `llama-pg174` is a variant of the test set.
