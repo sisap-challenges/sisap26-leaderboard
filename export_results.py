@@ -26,7 +26,8 @@ import yaml
 from pathlib import Path
 
 from github_repo_visibility import public_repo_or_private_label
-from paper_status import get_paper_status, has_paper, is_scored, resolve_team
+from paper_status import (get_paper_status, has_paper, is_baseline_team,
+                          is_scored, resolve_team)
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -183,7 +184,7 @@ def process_result(h5path: Path, team_dir: str, teams: dict) -> dict | None:
     team_meta = teams.get(team_dir, {})
     team      = resolve_team(team_meta.get("name", team_dir))
     repo      = public_repo_or_private_label(team_meta.get("repo", ""))
-    is_base   = bool(team_meta.get("is_baseline", False))
+    is_base   = bool(team_meta.get("is_baseline", False)) or is_baseline_team(team_dir, team)
 
     return {
         "task":        task,

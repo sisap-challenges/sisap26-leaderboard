@@ -23,7 +23,8 @@ from pathlib import Path
 import pandas as pd
 
 from github_repo_visibility import public_repo_or_private_label
-from paper_status import get_paper_status, has_paper, is_scored, resolve_team
+from paper_status import (get_paper_status, has_paper, is_baseline_team,
+                          is_scored, resolve_team)
 
 
 SCRIPT_DIR = Path(__file__).parent
@@ -174,7 +175,7 @@ def extract_repo_url(software: dict) -> str:
 
 
 def is_baseline(team: str, repo: str) -> bool:
-    return team == "basel1nerz"
+    return is_baseline_team(team)
 
 
 def compute_throughput(task: str, n_queries: int, buildtime: float, querytime: float) -> float:

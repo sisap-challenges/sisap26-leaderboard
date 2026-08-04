@@ -40,6 +40,22 @@ def resolve_team(team_key: str) -> str:
     return load_aliases().get(team_key, team_key)
 
 
+def is_baseline_team(*team_keys: str) -> bool:
+    """True for the organizers' reference baselines.
+
+    Driven by the "is-baseline" flag in teams.json so that the registration
+    name (vm_id) and the displayed team name can differ.
+    """
+    teams = load_teams()
+    for key in team_keys:
+        if not key:
+            continue
+        meta = teams.get(resolve_team(key))
+        if isinstance(meta, dict) and meta.get("is-baseline"):
+            return True
+    return False
+
+
 def is_scored(team_key: str) -> bool:
     """False for the surplus entries of a merged team.
 

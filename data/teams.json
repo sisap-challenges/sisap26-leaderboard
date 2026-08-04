@@ -1,4 +1,10 @@
 {
+    "Organizers": {
+      "aliases": ["basel1nerz"],
+      "is-baseline": true,
+      "note": "Reference baselines entered by the organizers, submitted on TIRA under the vm_id basel1nerz. Shown for context; not ranked as a participant.",
+    },
+
     "baremetal-vectors": {
         "paper": 43,
         "title": "Hardware-Sympathetic Optimization for High-Dimensional Vector Search SISAP 2026 Indexing Challenge: Task 1",
