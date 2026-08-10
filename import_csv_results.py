@@ -98,6 +98,20 @@ CSV_SOURCES = (
         "threshold": 0.8,
         "n_queries": 6_350_000,
         "file": "failed-entries-wikipedia-dev.csv",
+    }, {
+        "task": "task3",
+        "dataset": "nq-eval",
+        "threshold": 0.8,
+        # TODO
+        "n_queries": 3452,
+        "file": "task-3-nq-20260610-test-maik.csv",
+    }, {
+        "task": "task3",
+        "dataset": "fiqa-dev",
+        "threshold": 0.8,
+        # TODO
+        "n_queries": 6648,
+        "file": "task-3-fiqa-maik.csv",
     },
 )
 
