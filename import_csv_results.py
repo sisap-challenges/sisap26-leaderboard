@@ -98,7 +98,19 @@ CSV_SOURCES = (
         "threshold": 0.8,
         "n_queries": 6_350_000,
         "file": "failed-entries-wikipedia-dev.csv",
-    }
+    }, {
+        "task": "task1",
+        "dataset": "wikipedia-eval",
+        "threshold": 0.8,
+        "n_queries": 6_000_000,
+        "file": "tmp-wikipedia-eval.csv",
+    }, {
+        "task": "task1",
+        "dataset": "wikipedia-small",
+        "threshold": 0.8,
+        "n_queries": 200_000,
+        "file": "tmp-task-1-wikipedia-small.csv",
+    },
 )
 
 SUMMARY_COLUMNS = [
